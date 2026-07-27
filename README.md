@@ -3,6 +3,11 @@
 A Claude Code **marketplace** for the Gravitee support team — the catalogue the
 team installs plugins from.
 
+> **Want to add a plugin, or work on one?** Everything about the repository
+> layout, the two manifests, local development and releases lives in
+> **[CONTRIBUTING.md](CONTRIBUTING.md)**. This page is for installing and using
+> what is already here.
+
 ## Plugins
 
 | Plugin | What it does |
@@ -11,18 +16,71 @@ team installs plugins from.
 
 ## Installing
 
-Add the marketplace once, then install what you need from it.
+Adding the marketplace and installing a plugin are two separate steps — the
+catalogue on its own installs nothing.
+
+### From inside Claude Code
+
+`/plugin` opens an interactive panel with four tabs: **Discover**, **Installed**,
+**Marketplaces** and **Errors**. The same two steps also work as slash commands:
+
+```
+/plugin marketplace add enrique-pastrana/gravitee-support-tools
+/plugin install p1-updates@gravitee-support-tools
+```
+
+`/plugin install` opens the plugin's details and **asks** which scope you want
+before installing. The Discover tab shows the same details — the components it
+adds and its context cost — if you would rather browse than type.
+
+Then `/reload-plugins` activates it without restarting.
+
+### From the shell
 
 ```bash
 claude plugin marketplace add enrique-pastrana/gravitee-support-tools
 claude plugin install p1-updates@gravitee-support-tools
 ```
 
-Installed skills are namespaced by plugin, so `updateP1` is invoked as
-`/p1-updates:updateP1`. Start a new session — installing does not load the
-plugin into sessions that are already open.
+The difference is that the shell command **never asks**: it installs to user
+scope unless you pass `--scope`. Use it for scripting; use `/plugin` when you
+want to see what you are getting.
 
-Check what you have:
+Either way, installing does not load the plugin into sessions that are already
+open — run `/reload-plugins` or start a new one.
+
+Skills are namespaced by plugin, so `updateP1` is invoked as
+`/p1-updates:updateP1`.
+
+### Fathom authentication
+
+`p1-updates` talks to Fathom through an MCP server. Authentication is OAuth and
+**per person**: open `/mcp`, select `fathom`, and authorise with your own
+account. No token lives in this repository — it is stored on your own machine,
+and everyone sees only their own meetings.
+
+## Scopes
+
+Both `marketplace add` and `install` take `--scope`.
+
+| scope | declared in | who sees it |
+| --- | --- | --- |
+| `user` (default) | `~/.claude/settings.json` | you, in every directory |
+| `project` | `<dir>/.claude/settings.json` | anyone who opens that directory — committed |
+| `local` | `<dir>/.claude/settings.local.json` | only you, only in that directory |
+
+The directory you run from does not scope anything by itself — only the flag
+does. And `uninstall` defaults to `user` whatever the plugin was installed as,
+so undoing a local install needs `--scope local` explicitly.
+
+To put the marketplace in front of the whole team at clone time, declare it at
+project scope so it lands in a committed `settings.json`:
+
+```bash
+claude plugin marketplace add enrique-pastrana/gravitee-support-tools --scope project
+```
+
+## Checking and uninstalling
 
 ```bash
 claude plugin marketplace list
@@ -36,112 +94,29 @@ claude plugin uninstall p1-updates@gravitee-support-tools
 claude plugin marketplace remove gravitee-support-tools
 ```
 
-`uninstall` leaves the plugin files behind in
+Removing a marketplace uninstalls every plugin you installed from it, so the
+second command alone is enough if you want the lot gone.
+
+To switch a plugin off without removing it — and back on later — use
+`claude plugin disable` and `claude plugin enable`. That keeps the install and
+your Fathom authentication intact.
+
+## Troubleshooting
+
+**The clone fails.** `marketplace add` has been observed cloning over SSH
+(`git@github.com:…`) even with `gh config get git_protocol` set to `https`. The
+repository is public, but a missing GitHub SSH key is the first thing to check.
+
+**Uninstalling did not free the disk.** `uninstall` leaves the plugin files in
 `~/.claude/plugins/cache/<marketplace>/`, marked with an `.orphaned_at` stamp so
 a reinstall is instant. `claude plugin prune` does **not** clear that — it only
-handles auto-installed dependencies. Delete the directory by hand if you want
-the disk clean.
+handles auto-installed dependencies. Delete the directory by hand.
 
-## Scopes
+**The skill does not appear.** Installing does not affect open sessions: run
+`/reload-plugins` or start a new one. If it still does not show up, clear the
+cache with `rm -rf ~/.claude/plugins/cache`, restart, and reinstall.
 
-Both `marketplace add` and `install` take `--scope`, and getting it wrong is the
-usual source of confusion.
+## Contributing
 
-| scope | declared in | who sees it |
-| --- | --- | --- |
-| `user` (default) | `~/.claude/settings.json` | you, in every directory |
-| `project` | `<dir>/.claude/settings.json` | anyone who opens that directory — committed |
-| `local` | `<dir>/.claude/settings.local.json` | only you, only in that directory |
-
-Two traps worth knowing:
-
-- **The directory you run from does not scope anything.** Running `install`
-  inside a project folder without `--scope local` still installs globally.
-- **`uninstall` defaults to `user`**, whatever the plugin was installed as. To
-  undo a local install you must pass `--scope local` explicitly.
-
-What `--scope local` isolates is the plugin's *activation*, not the
-marketplace's visibility: `claude plugin marketplace list` reads a global cache
-at `~/.claude/plugins/known_marketplaces.json`, so a locally-declared
-marketplace still shows up from any directory. `claude plugin list` is the one
-that respects scope — it records a `projectPath` for local installs and none
-for user ones.
-
-To put the marketplace in front of the whole team at clone time, declare it at
-project scope so it lands in a committed `settings.json`:
-
-```bash
-claude plugin marketplace add enrique-pastrana/gravitee-support-tools --scope project
-```
-
-## Installing from a local checkout
-
-While developing, point `marketplace add` at a path instead of a repo:
-
-```bash
-claude plugin marketplace add ../gravitee-support-tools --scope local
-```
-
-A bare `.` is rejected — pass `./something`, a relative path, or an absolute
-one. Relative paths are resolved and stored as **absolute**, so a path-based
-declaration is never portable to another machine. That is precisely why the
-team-facing instructions above use the GitHub shorthand.
-
-## Layout
-
-```
-gravitee-support-tools/
-├── .claude-plugin/
-│   └── marketplace.json   # the catalogue — name, owner, plugins[]
-├── p1-updates/            # a plugin, with its own .claude-plugin/plugin.json
-└── README.md
-```
-
-Two manifests, two different files, easily confused:
-
-- `.claude-plugin/marketplace.json` at **this** level lists the plugins.
-- `.claude-plugin/plugin.json` inside **each plugin** describes that plugin.
-
-Each entry in `plugins[]` points at its plugin with `source`. A relative path
-like `./p1-updates` means the plugin lives in this same repository; plugins
-hosted elsewhere use a `git` / `git-subdir` source object instead.
-
-Metadata is duplicated between the two manifests on purpose: the marketplace
-entry is what the catalogue shows *before* the plugin is fetched. Keep the
-descriptions in step when a plugin changes. Version is deliberately **not**
-repeated here — it is read from `plugin.json`, so there is one place to bump.
-
-## Adding a plugin
-
-1. Create the plugin directory here, with `.claude-plugin/plugin.json` inside it.
-2. Add an entry to `plugins[]` in `.claude-plugin/marketplace.json`, with
-   `"source": "./<dir>"`.
-3. Validate both manifests:
-
-   ```bash
-   claude plugin validate . --strict            # the marketplace
-   claude plugin validate ./<dir> --strict      # the plugin
-   ```
-
-`--strict` fails on unrecognised fields and missing metadata that the runtime
-would otherwise tolerate — use it, and use it in CI.
-
-To cut a release, `claude plugin tag ./<dir>` creates a `<name>--v<version>`
-git tag and refuses if `plugin.json` and the marketplace entry disagree — which
-is the drift this layout invites.
-
-## Developing against a plugin
-
-While iterating you usually do **not** want to install. Load the plugin in
-place for a single session:
-
-```bash
-claude --plugin-dir ./p1-updates
-```
-
-This installs nothing and copies nothing. Edits to a `SKILL.md` body take
-effect immediately; changes to `.mcp.json`, either manifest, or a newly added
-skill directory need `/reload-plugins` or a restart.
-
-If you *have* installed from the marketplace and then edit the source, run
-`claude plugin marketplace update gravitee-support-tools` to pick the change up.
+Adding a plugin, changing an existing one, or cutting a release — see
+**[CONTRIBUTING.md](CONTRIBUTING.md)**.
