@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "p1-updates",
+  "displayName": "P1 Updates",
+  "version": "0.1.0",
+  "description": "Turn a Fathom customer call into a who/what/when P1 status summary, ready to paste into Slack.",
+  "author": {
+    "name": "Enrique Pastrana",
+    "email": "enrique.pastrana@graviteesource.com"
+  },
+  "keywords": [
+    "gravitee",
+    "support",
+    "p1",
+    "fathom",
+    "incident"
+  ]
+}

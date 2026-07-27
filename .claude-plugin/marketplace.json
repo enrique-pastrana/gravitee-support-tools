@@ -1,0 +1,28 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "gravitee-support-tools",
+  "description": "Claude Code plugins for the Gravitee support team.",
+  "owner": {
+    "name": "Enrique Pastrana",
+    "email": "enrique.pastrana@graviteesource.com"
+  },
+  "plugins": [
+    {
+      "name": "p1-updates",
+      "description": "Turn a Fathom customer call into a who/what/when P1 status summary, ready to paste into Slack.",
+      "author": {
+        "name": "Enrique Pastrana",
+        "email": "enrique.pastrana@graviteesource.com"
+      },
+      "category": "productivity",
+      "keywords": [
+        "gravitee",
+        "support",
+        "p1",
+        "fathom",
+        "incident"
+      ],
+      "source": "./p1-updates"
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+.DS_Store
+
+# Personal, per-machine settings: permissions and local-scope plugin
+# declarations. The shared equivalent is .claude/settings.json, which is
+# committed on purpose.
+.claude/settings.local.json
