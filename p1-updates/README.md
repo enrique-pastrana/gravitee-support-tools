@@ -24,6 +24,51 @@ always **Gravitee** and **Customer**. Note that the line naming which meeting
 was picked is *not* anonymised — it exists so a wrong pick gets caught, and it
 is for you, not for the channel.
 
+## Using it
+
+Three ways in, depending on what you have:
+
+```
+/p1-updates:updateP1                          the most recent Fathom meeting
+/p1-updates:updateP1 yesterday's OCTO call    a meeting you name
+/p1-updates:updateP1 <paste a transcript>     no Fathom call at all
+```
+
+You do not have to type the command. Asking in conversation works too, because
+the skill is model-invoked:
+
+> give me a P1 update from the last call
+
+> P1 summary from yesterday's call with the customer
+
+When it names a meeting rather than taking the latest, it searches titles and
+summaries. If several match, or none do, it lists the candidates and asks you to
+pick instead of guessing.
+
+It always opens by stating which meeting it used — check that line first, since
+a wrong pick is otherwise invisible. Then it prints:
+
+```
+Current status
+Who: Gravitee
+What:
+- …
+
+When: …
+
+Next steps
+Who: Customer
+What:
+- …
+
+When: …
+```
+
+Actors with nothing to report are omitted, so it is normal to see only Gravitee
+under *Current status* and only Customer under *Next steps*. Nothing is written
+to disk — copy it into Slack yourself, and ask for tweaks first if it needs
+them.
+
 ## Requirements
 
 Fathom, connected through the MCP server this plugin declares in `.mcp.json`.
@@ -53,29 +98,20 @@ the plugin root — including `.mcp.json`, which is the mistake most easily made
 ## Local development
 
 This directory is the plugin root. The parent folder is the marketplace
-container and is not part of the plugin.
-
-Validate the manifest from here:
-
-```bash
-claude plugin validate . --strict
-```
-
-To load it in a live session, pass `--plugin-dir` when starting Claude Code:
+container and is not part of the plugin — so `--plugin-dir` and
+`claude plugin validate` are pointed *here*, not one level up.
 
 ```bash
 claude --plugin-dir /path/to/p1-updates
 ```
 
-The flag loads the plugin in place for that session only. It installs nothing,
-copies nothing, and leaves no files in the directory you launch from.
+For the rest — validating, reloading after an edit, installing from a local
+checkout, releases — see [CONTRIBUTING.md](../CONTRIBUTING.md).
 
-Edits to a `SKILL.md` body take effect immediately. Changes to `.mcp.json`, the
-manifest, or a newly added skill directory do not — run `/reload-plugins` or
-restart the session to pick those up.
-
-If the MCP server fails to start, `claude --debug` shows the initialisation
-error.
+One thing specific to this plugin: because it declares an MCP server,
+`/reload-plugins` invalidates the prompt cache and can refuse to apply, telling
+you to pass `--force`. Restarting the session avoids the question. If Fathom
+fails to come up, `claude --debug` shows the initialisation error.
 
 ## Known gaps
 
