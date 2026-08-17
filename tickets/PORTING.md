@@ -141,3 +141,28 @@ plugin **skill** (or split it across command prompts). **Undecided.**
   (001→002, `next_entry`→3) all work through `${CLAUDE_PLUGIN_ROOT}`. `plugin
   validate --strict` passes. The interactive Zendesk-pull / draft flow still
   needs a live-session test.
+- **2026-08-17** — Live-tested the whole slice end-to-end against real Zendesk
+  ticket 17337 in an isolated `TICKETS_ROOT` (`~/tickets-test-0817`; the real
+  `~/TICKETS/17000/17337` left untouched). `/new-ticket` (11 attachments,
+  `opened_at` from Zendesk, `[001]` in summary+verbatim+`comment_id` format),
+  `/log-updates` (seeded the cursor to comment #68 to bound the pull to the last
+  5 comments — validated classification, per-source emoji 📥/📤/🔒/🔔,
+  summary-vs-verbatim, `comment_id` footers, and cursor advance), `/reply`
+  (draft→iterate→confirm→save: wrote `[007]` only on confirmation, bump-first,
+  refreshed the exec summary) and `/status` (7 entries, `[008]` next, 11
+  attachments excluding the ledger, read-only) all worked. Two findings the live
+  run surfaced, both fixed in this PR:
+  - **A — `new-ticket` over-downloaded attachments when adopting an old ticket.**
+    It scanned the whole thread and tagged every attachment `001_` + logged the
+    tokens in the idempotency ledger, so a later `/log-updates --comment-id`
+    would skip them and those entries would lose their attachment links. Fixed:
+    `new-ticket` now fetches **only the opening comment's** attachments
+    (`--comment-id <opening_id>`), matching `[001]`'s scope; later comments'
+    attachments are pulled under their own entry by `/log-updates`. No change for
+    a fresh ticket (thread = opening comment).
+  - **B — `log-updates` trusted a cursor that ran ahead of the timeline.** If
+    `last_comment_id` points past the newest comment actually logged, the gap was
+    skipped silently (exactly what the manual test seed created). Fixed: step 1
+    now cross-checks the cursor against the timeline's `🔗 Zendesk comment #<id>`
+    footers and, on a gap, asks the user to backfill from the last logged id or
+    trust the cursor. `plugin validate --strict` passes.

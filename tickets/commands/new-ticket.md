@@ -60,10 +60,18 @@ to scripts and templates there, never inside the tickets workspace.
      description), a `Key details (verbatim)` block only for load-bearing
      specifics, and the `🔗 Zendesk comment #<comment_id>` footer.
 
-5. **Attachments — auto-download from Zendesk first.** Pull every attachment
-   in the thread so far into entry `[001]`:
-   `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/fetch_attachments.py" <number> 1`
-   (no `--comment-id` → scans the whole thread). Follow
+5. **Attachments — auto-download from Zendesk first.** Pull **only the opening
+   comment's** attachments into entry `[001]` — pass its comment id (the same id
+   you stored as `last_comment_id` in step 4):
+   `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/fetch_attachments.py" <number> 1 --comment-id <opening_comment_id>`
+   Scope it to that comment on purpose: `[001]` is the opening message, so only
+   its own attachments belong here. Attachments from later comments belong to
+   later entries and are pulled — under their correct entry number — by
+   `/log-updates` as it logs those comments. (Scanning the whole thread here
+   would tag every attachment `001_` and record it in the idempotency ledger, so
+   `/log-updates` would then skip it and the later entries would lose their
+   attachment links.) For a fresh ticket the thread is just the opening comment,
+   so this fetches everything anyway. Follow
    `${CLAUDE_PLUGIN_ROOT}/references/attachments.md` for the full procedure —
    using the printed `path` values verbatim for the links, the manual
    `attach.py` fallback if it errors, and how to read what you downloaded.

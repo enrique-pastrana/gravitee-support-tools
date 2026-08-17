@@ -33,6 +33,18 @@ themselves); `<dir>` is that resolved folder (where `timeline.md` /
 1. **Find the baseline.** Read `<dir>/metadata.json` and note `last_comment_id`
    — the id of the newest Zendesk comment already in the timeline.
 
+   **Sanity-check it against the timeline.** Scan `timeline.md` for its
+   `🔗 Zendesk comment #<id>` footers and take the largest as the id actually
+   logged. If `last_comment_id` is set and is **greater than** that largest
+   logged id, the cursor is ahead of what's really in the timeline: the comments
+   between them were never logged, and step 3 would silently skip them. Don't
+   guess — tell the user how many comments fall in the gap and ask whether to
+   (a) **backfill** from the largest logged id (treat everything after it as
+   new), or (b) **trust the cursor** and only pull comments after
+   `last_comment_id`. Then use the chosen id as the baseline for step 3. (Skip
+   this check when the timeline has no numeric comment footers yet — e.g. a fresh
+   adopt or paste-only history.)
+
 2. **Fetch the thread from Zendesk.** Call the `zendesk` MCP
    `zendesk_get_ticket_with_attachments` for `<number>` (ticket + comments +
    attachment list in one call). If it errors (connection/compose failure), the
@@ -40,8 +52,9 @@ themselves); `<dir>` is that resolved folder (where `timeline.md` /
    `"${IA_TOOLING_ROOT}/bin/local-tooling" start`, then **fall back to the paste
    flow** (see below) and stop following the Zendesk steps.
 
-3. **Select what's new.** Keep only comments with an id **greater than**
-   `last_comment_id` (comment ids increase over time). Process them in
+3. **Select what's new.** Keep only comments with an id **greater than** the
+   baseline chosen in step 1 (the cursor, or the largest logged id if the user
+   opted to backfill; comment ids increase over time). Process them in
    chronological order.
    - If `last_comment_id` is `null` (older ticket, or first run), don't guess:
      list the comments briefly (id · date · author · one-line) and ask the user

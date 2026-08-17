@@ -11,8 +11,9 @@ Usage:
 
   <entry>        The NNN entry number to prefix downloaded files with.
   --comment-id   Only download attachments from this comment (e.g. the message
-                 being logged by /log-updates). Omit to scan the whole thread
-                 (e.g. /new-ticket on a fresh ticket).
+                 being logged by /log-updates, or the opening comment for
+                 /new-ticket's [001]). Omit to scan the whole thread — pull
+                 every attachment across all comments under one entry number.
   --date         Force the date subfolder (YYYY-MM-DD). By default each
                  attachment goes to received/<date-of-its-comment>/.
   --dry-run      List what would be downloaded without writing anything.
