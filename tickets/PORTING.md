@@ -98,3 +98,71 @@ plugin **skill** (or split it across command prompts). **Undecided.**
   against a temp `TICKETS_ROOT`: bucket creation, template render, entry bump,
   overwrite refusal, filename normalisation, and the `status` path resolver all
   work through `${CLAUDE_PLUGIN_ROOT}`; `plugin validate --strict` passes.
+- **2026-08-17** — Branch `add-tickets-up-command`. Ported the `tickets-up`
+  command + `scripts/tickets-up` (start/verify the ia-tooling stack: Docker,
+  Ollama, vectordb health, restart policy). Renamed the env var `IA_TOOLING` →
+  `IA_TOOLING_ROOT` to match `.mcp.json`; translated the remaining Spanish to
+  English; the command doc explains what it does and the two-layer fallback
+  story. Verified by running the script (exit 0, healthy) and via
+  `/tickets:tickets-up` in the sandbox. `plugin validate --strict` passes.
+- **2026-08-17** — Branch `add-customer-reply-commands`. Ported the next
+  command slice: `reply` (draft-and-iterate outbound reply) plus a **redesigned**
+  version of the source's `customer` command. Design discussed with the user;
+  four decisions shaped it:
+  - **Renamed `customer` → `log-updates`** and broadened its scope. The source
+    `customer` was paste-driven and customer-only; a Zendesk entry can just as
+    well be an internal note, a reply we sent, or a linked Jira. `log-updates`
+    is source-agnostic and **Zendesk-driven**: it calls the `zendesk` MCP
+    (`zendesk_get_ticket_with_attachments`), selects comments newer than
+    `metadata.json`'s `last_comment_id`, and logs each — falling back to the
+    paste flow when the stack is down. Added `last_comment_id` to the metadata
+    template; `new-ticket` seeds it with the opening comment's id.
+  - **Summarise, don't store the literal.** Entries now carry a short summary +
+    a `Key details (verbatim)` block only for load-bearing specifics (errors,
+    versions, config, ids) + a `🔗 Zendesk comment #<id>` footer as the pointer
+    to the exact words. Keeps the timeline cheap for `/reply` and `/status` to
+    read. Reworked the `entry-snippets.md` snippet (`Inbound customer message`
+    → `Incoming update`) accordingly and extended the emoji table (🔒 internal
+    note, 🔗 linked source, 🔔 one-liner).
+  - **Extracted shared logic to `references/`**, read explicitly by the commands
+    (deterministic, unlike ambient skill-loading): `attachments.md` (download
+    with `fetch_attachments.py` → view with `Read`; the MCP only explores, never
+    routes binaries through context) and `classify-entry.md` (substantive vs.
+    non-substantive). `log-updates`, `reply` and `new-ticket` now point here
+    instead of repeating the blocks.
+  - **Bump-first everywhere.** Replaced the peek+commit split with a single
+    `bump_entry` call that returns the consumed `NNN` — fixes a real hole in
+    `reply` (it referenced `[NNN]` with no source) and trades the duplicate-id
+    risk for a harmless gap. Also added a tiny `__main__` CLI to
+    `ticket_paths.py` so all three commands resolve the folder with one short
+    call instead of the inline `python3 -c …` that `status` carried.
+  Verified mechanically against an isolated `TICKETS_ROOT`: the path resolver,
+  `last_comment_id` propagation from the template, and the bump-first cycle
+  (001→002, `next_entry`→3) all work through `${CLAUDE_PLUGIN_ROOT}`. `plugin
+  validate --strict` passes. The interactive Zendesk-pull / draft flow still
+  needs a live-session test.
+- **2026-08-17** — Live-tested the whole slice end-to-end against real Zendesk
+  ticket 17337 in an isolated `TICKETS_ROOT` (`~/tickets-test-0817`; the real
+  `~/TICKETS/17000/17337` left untouched). `/new-ticket` (11 attachments,
+  `opened_at` from Zendesk, `[001]` in summary+verbatim+`comment_id` format),
+  `/log-updates` (seeded the cursor to comment #68 to bound the pull to the last
+  5 comments — validated classification, per-source emoji 📥/📤/🔒/🔔,
+  summary-vs-verbatim, `comment_id` footers, and cursor advance), `/reply`
+  (draft→iterate→confirm→save: wrote `[007]` only on confirmation, bump-first,
+  refreshed the exec summary) and `/status` (7 entries, `[008]` next, 11
+  attachments excluding the ledger, read-only) all worked. Two findings the live
+  run surfaced, both fixed in this PR:
+  - **A — `new-ticket` over-downloaded attachments when adopting an old ticket.**
+    It scanned the whole thread and tagged every attachment `001_` + logged the
+    tokens in the idempotency ledger, so a later `/log-updates --comment-id`
+    would skip them and those entries would lose their attachment links. Fixed:
+    `new-ticket` now fetches **only the opening comment's** attachments
+    (`--comment-id <opening_id>`), matching `[001]`'s scope; later comments'
+    attachments are pulled under their own entry by `/log-updates`. No change for
+    a fresh ticket (thread = opening comment).
+  - **B — `log-updates` trusted a cursor that ran ahead of the timeline.** If
+    `last_comment_id` points past the newest comment actually logged, the gap was
+    skipped silently (exactly what the manual test seed created). Fixed: step 1
+    now cross-checks the cursor against the timeline's `🔗 Zendesk comment #<id>`
+    footers and, on a gap, asks the user to backfill from the last logged id or
+    trust the cursor. `plugin validate --strict` passes.

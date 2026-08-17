@@ -48,3 +48,15 @@ def resolve_ticket_dir(ticket_id: str) -> Path:
     if flat.exists():
         return flat
     return nested
+
+
+if __name__ == "__main__":
+    # Tiny CLI so commands can resolve a ticket folder with one short call:
+    #   python3 ticket_paths.py <ticket-number>   ->  prints the absolute path
+    # (no --peek-style flags; resolution is the whole job here).
+    import sys
+
+    if len(sys.argv) != 2:
+        print("usage: ticket_paths.py <ticket-number>", file=sys.stderr)
+        raise SystemExit(2)
+    print(resolve_ticket_dir(sys.argv[1]))

@@ -35,19 +35,33 @@ verbatim — pick the snippet that fits and substitute the placeholders.
 ## Emojis by entry type
 
 - 📥 Inbound message from the customer
-- 📤 Outbound reply to the customer (draft)
+- 📤 Outbound reply to the customer (draft or sent)
+- 🔒 Internal note (not visible to the customer)
+- 🔗 Linked source (Jira, another ticket)
 - 🔍 Investigation step (own analysis, log review, similar-ticket search)
 - 🧪 Reproduction milestone
 - ✅ Resolution / confirmation
 - 🛠️ Configuration or environment change applied
 - ⚠️ Risk, blocker, open question
+- 🔔 Non-substantive one-liner (ack, holding message, ping)
 
-## Inbound customer message
+## Incoming update
+
+For an entry logged from a Zendesk comment (customer message, a reply we sent,
+an internal note, a linked Jira update, …). **Summarise — don't paste the
+literal**; the verbatim text lives in Zendesk, reachable via the comment id in
+the footer. Pick the emoji/source label that fits (📥 customer, 📤 our reply,
+🔒 internal note, 🔗 linked source).
 
 ```markdown
 ### [NNN] YYYY-MM-DD HH:MM - 📥 Customer: <short subject>
 
-> (quoted message from the customer)
+**Summary:** (2–4 lines: the idea, decision, symptom, or request — the main
+points, in your own words.)
+
+**Key details (verbatim):** (only the load-bearing specifics where paraphrase
+loses information — exact error messages, versions, config values, commands,
+ids, inside a fenced code block. Omit this block entirely if there are none.)
 
 📎 **Attachments:**
 - 🖼️ [received/YYYY-MM-DD/NNN_xxx.png](received/YYYY-MM-DD/NNN_xxx.png)
@@ -58,9 +72,11 @@ verbatim — pick the snippet that fits and substitute the placeholders.
 <details>
 <summary>🔍 <b>Initial analysis</b></summary>
 
-(notes from your read of the attachments)
+(notes from your read of the attachments — only if you actually have something)
 
 </details>
+
+🔗 Zendesk comment #<comment_id>
 ```
 
 ## Outbound reply draft
