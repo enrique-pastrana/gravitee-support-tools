@@ -1,0 +1,75 @@
+#!/usr/bin/env bash
+# tickets-up — start and verify everything needed to work on tickets:
+#   1) Ollama daemon (embeddings)
+#   2) ia-tooling Docker stack (postgres + vectordb-api + MCP adapters)
+# Runnable from any directory. Idempotent: if something is already up it just
+# verifies and reports.
+#
+# It lives in the plugin (not in ia-tooling) on purpose: ia-tooling is the
+# company repo and a `git clean` there must not take this script away. It only
+# uses ia-tooling as the location of the docker-compose, via IA_TOOLING_ROOT —
+# the same variable the plugin's .mcp.json uses to locate the stack.
+set -euo pipefail
+
+IA_TOOLING_ROOT="${IA_TOOLING_ROOT:-$HOME/ia-tooling}"
+API_URL="http://localhost:8000"
+
+say() { printf "\033[1;34m▸\033[0m %s\n" "$*"; }
+ok()  { printf "\033[1;32m✓\033[0m %s\n" "$*"; }
+err() { printf "\033[1;31m✗\033[0m %s\n" "$*" >&2; }
+
+# 1) Docker daemon
+if ! docker info >/dev/null 2>&1; then
+  err "Docker is not responding. Open Docker Desktop and retry."
+  exit 1
+fi
+
+# 2) Ollama (embeddings). Installed via brew services; start it if it's stopped.
+if ! curl -fsS --max-time 3 http://localhost:11434/api/tags >/dev/null 2>&1; then
+  say "Ollama not responding, starting the service…"
+  brew services start ollama >/dev/null 2>&1 || true
+  for _ in $(seq 1 15); do
+    curl -fsS --max-time 2 http://localhost:11434/api/tags >/dev/null 2>&1 && break
+    sleep 1
+  done
+fi
+if curl -fsS --max-time 3 http://localhost:11434/api/tags >/dev/null 2>&1; then
+  ok "Ollama is up"
+else
+  err "Ollama did not start (rag_search will give poor results). Check: brew services list"
+fi
+
+# 3) ia-tooling stack
+say "Bringing up the ia-tooling stack…"
+( cd "$IA_TOOLING_ROOT" && docker compose up -d >/dev/null 2>&1 )
+
+# 3b) Restart policy: let the stack come back on its own after a Docker/Mac
+# reboot. Applied to the already-created containers with `docker update` rather
+# than in docker-compose.yml, so the company repo is not modified. Idempotent.
+say "Setting containers to restart automatically…"
+for c in local-tooling-vectordb-postgres local-tooling-vectordb-api; do
+  docker update --restart unless-stopped "$c" >/dev/null 2>&1 || true
+done
+for c in local-tooling-vectordb-mcp-bridge local-tooling-zendesk-mcp-adapter; do
+  docker update --restart on-failure "$c" >/dev/null 2>&1 || true
+done
+
+# 4) Wait for vectordb-api to be healthy
+say "Waiting for the vectordb API…"
+for _ in $(seq 1 30); do
+  if curl -fsS --max-time 2 "$API_URL/health" >/dev/null 2>&1; then break; fi
+  sleep 1
+done
+
+# 5) Summary
+if HEALTH=$(curl -fsS --max-time 3 "$API_URL/health" 2>/dev/null); then
+  BACKEND=$(printf '%s' "$HEALTH" | sed -E 's/.*"embedding_backend":"([^"]+)".*/\1/')
+  DOCS=$(printf '%s' "$HEALTH" | sed -E 's/.*"documents":([0-9]+).*/\1/')
+  ok "vectordb API healthy — backend=$BACKEND, documents=$DOCS"
+  [ "$BACKEND" = "ollama" ] || err "Warning: backend is NOT ollama (it's '$BACKEND'). Check \$IA_TOOLING_ROOT/.env ($IA_TOOLING_ROOT/.env)"
+else
+  err "vectordb API did not respond. Diagnose: cd \"\$IA_TOOLING_ROOT\" && docker compose ps"
+  exit 1
+fi
+
+ok "Ready to work on tickets."
