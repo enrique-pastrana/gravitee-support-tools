@@ -98,3 +98,25 @@ plugin **skill** (or split it across command prompts). **Undecided.**
   against a temp `TICKETS_ROOT`: bucket creation, template render, entry bump,
   overwrite refusal, filename normalisation, and the `status` path resolver all
   work through `${CLAUDE_PLUGIN_ROOT}`; `plugin validate --strict` passes.
+- **2026-08-17** — Branch `add-tickets-up-command`. Ported the `tickets-up`
+  command + `scripts/tickets-up` (start/verify the ia-tooling stack: Docker,
+  Ollama, vectordb health, restart policy). Renamed the env var `IA_TOOLING` →
+  `IA_TOOLING_ROOT` to match `.mcp.json`; translated the remaining Spanish to
+  English; the command doc explains what it does and the two-layer fallback
+  story. Verified by running the script (exit 0, healthy) and via
+  `/tickets:tickets-up` in the sandbox. `plugin validate --strict` passes.
+- **2026-08-17** — Branch `add-customer-reply-commands`. Ported the next
+  command slice: `customer` (log inbound message + attachments) + `reply`
+  (draft-and-iterate outbound reply). Both are prompt-only — they add no new
+  scripts, reusing already-ported machinery: `bump_entry` (peek + commit),
+  `fetch_attachments`/`attach` (Zendesk auto-download + manual fallback), and
+  the `entry-snippets.md` templates (`inbound customer message`, `outbound
+  reply draft`). Cleanup on the way in: script/template paths rewritten to
+  `${CLAUDE_PLUGIN_ROOT}/*`, `~/ia-tooling` → `$IA_TOOLING_ROOT/.env`; added the
+  `$TICKETS_ROOT` + thousand-bucket note both other commands carry; gave `reply`
+  an `argument-hint`/`$ARGUMENTS` path (source resolved from cwd only); and made
+  the prompt neutral — replaced `reply`'s Spanish save-confirmation examples
+  (`guárdalo`/`añádelo`/`ya`/`go`, `qué te parece`) with a language-neutral
+  "clearly says to save it" / "asking for your opinion" and pointed the
+  attachment-link guidance at the normalised `path` the helpers print (the same
+  fix `new-ticket` got). `plugin validate --strict` passes.
