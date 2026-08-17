@@ -34,7 +34,7 @@ to scripts and templates there, never inside the tickets workspace.
    - If the `zendesk` tool errors with a connection / compose failure, the
      ia-tooling stack is probably down — tell the user to run
      `"${IA_TOOLING_ROOT}/bin/local-tooling" start`, then **fall back** to
-     asking him to paste the initial Zendesk content manually (subject,
+     asking the user to paste the initial Zendesk content manually (subject,
      customer, product, version, priority, opening message).
    - `product` and `version` are usually not clean Zendesk fields — infer from
      tags / subject if obvious, otherwise leave `TBD` and ask the user. Never
@@ -69,11 +69,11 @@ to scripts and templates there, never inside the tickets workspace.
      symptom / error text to surface similar indexed tickets (skip if the tool
      is unavailable).
    - **Index:** read `$TICKETS_ROOT/_kb/tickets-index.md` if it exists and look
-     for rows whose `Producto / Versión`, `Componente` or `Síntoma` plausibly
-     match the new ticket (same product/version, same component, or overlapping
-     symptom keywords). Skip this source if the file doesn't exist yet.
+     for rows whose product/version, component or symptom plausibly match the
+     new ticket (same product/version, same component, or overlapping symptom
+     keywords). Skip this source if the file doesn't exist yet.
    - If any look relevant, list them briefly to the user with their ID,
-     status and one-line síntoma, so he can decide whether to read the
+     status and one-line symptom, so the user can decide whether to read the
      related timelines.
    - If nothing looks related, say so in one short sentence — don't
      stretch the match.
