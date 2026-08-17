@@ -30,6 +30,12 @@ export TICKETS_ROOT="$HOME/TICKETS"   # optional; this is the default
 
 Commands available so far:
 
+- **`/tickets-up`** — start and verify the `ia-tooling` stack (Docker + Ollama +
+  vectordb). Run it first each session, and whenever another command reports the
+  stack is down. It's the single recovery point — commands don't start the stack
+  themselves, they point back here. Some (`new-ticket`, `customer`) can still
+  work in a manual fallback with the stack down; indexing and `sync` cannot.
+  macOS/Homebrew setup.
 - **`/new-ticket <number>`** — start a new ticket. Creates
   `$TICKETS_ROOT/<thousand>/<number>/` with `timeline.md` and `metadata.json`,
   pulls the ticket subject/customer/priority and attachments from Zendesk (with
