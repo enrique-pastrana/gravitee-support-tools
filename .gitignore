@@ -1,5 +1,9 @@
 .DS_Store
 
+# Python bytecode cache from running the plugin's helper scripts.
+__pycache__/
+*.pyc
+
 # Personal, per-machine settings: permissions and local-scope plugin
 # declarations. The shared equivalent is .claude/settings.json, which is
 # committed on purpose.
