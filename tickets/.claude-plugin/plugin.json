@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "tickets",
+  "displayName": "Tickets",
+  "version": "0.0.1",
+  "description": "Manage Gravitee Zendesk support tickets as chronological timelines — logging, drafting replies, KB articles and cross-ticket search, driven from Claude Code.",
+  "author": {
+    "name": "Enrique Pastrana",
+    "email": "enrique.pastrana@graviteesource.com"
+  },
+  "keywords": [
+    "gravitee",
+    "support",
+    "zendesk",
+    "tickets",
+    "timeline",
+    "kb"
+  ]
+}

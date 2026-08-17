@@ -1,0 +1,35 @@
+{
+  "mcpServers": {
+    "zendesk": {
+      "command": "docker",
+      "args": [
+        "run", "-i", "--rm",
+        "--network", "ia-tooling_default",
+        "--env-file", "${IA_TOOLING_ROOT}/.env",
+        "-e", "VDB_API_URL=http://vectordb-api:8000",
+        "ia-tooling-zendesk-mcp-adapter"
+      ]
+    },
+    "vectordb": {
+      "command": "docker",
+      "args": [
+        "run", "-i", "--rm",
+        "--network", "ia-tooling_default",
+        "-e", "VDB_API_URL=http://vectordb-api:8000",
+        "ia-tooling-vectordb-mcp-bridge"
+      ]
+    },
+    "github-mcp-server": {
+      "command": "${IA_TOOLING_ROOT}/bin/local-tooling",
+      "args": ["mcp", "github"]
+    },
+    "atlassian-mcp-server": {
+      "command": "${IA_TOOLING_ROOT}/bin/local-tooling",
+      "args": ["mcp", "atlassian"]
+    },
+    "kapa": {
+      "command": "${IA_TOOLING_ROOT}/bin/local-tooling",
+      "args": ["mcp", "kapa"]
+    }
+  }
+}
