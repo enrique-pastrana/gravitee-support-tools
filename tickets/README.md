@@ -7,9 +7,12 @@ Code.
 
 > **Status: work in progress.** This plugin is being ported from the standalone
 > `~/TICKETS` workspace into a portable marketplace plugin. The MCP wiring to
-> `ia-tooling` is done and tested, and the first commands (`new-ticket`,
-> `status`) are ported; the rest are on the way — see [PORTING.md](PORTING.md)
-> for the plan and progress.
+> `ia-tooling` is done and tested, and the first commands (`tickets-up`,
+> `new-ticket`, `log-updates`, `reply`, `status`) are ported; the rest are on
+> the way — see [PORTING.md](PORTING.md) for the plan and progress.
+
+> **New here?** Read [docs/getting-started.md](docs/getting-started.md) — a
+> plain-language first-time guide to what the plugin does and how to use it.
 
 ## What it will do
 
@@ -33,7 +36,7 @@ Commands available so far:
 - **`/tickets-up`** — start and verify the `ia-tooling` stack (Docker + Ollama +
   vectordb). Run it first each session, and whenever another command reports the
   stack is down. It's the single recovery point — commands don't start the stack
-  themselves, they point back here. Some (`new-ticket`, `customer`) can still
+  themselves, they point back here. Some (`new-ticket`, `log-updates`) can still
   work in a manual fallback with the stack down; indexing and `sync` cannot.
   macOS/Homebrew setup.
 - **`/new-ticket <number>`** — start a new ticket. Creates
@@ -41,6 +44,13 @@ Commands available so far:
   pulls the ticket subject/customer/priority and attachments from Zendesk (with
   a manual paste fallback when the stack is down), logs the opening message as
   entry `[001]`, and surfaces similar past tickets.
+- **`/log-updates [number]`** — pull new activity from the Zendesk thread
+  (customer messages, replies, internal notes) into the timeline as summarised
+  entries, downloading any new attachments. Each entry keeps a `comment_id`
+  pointer back to the exact words in Zendesk. Falls back to a manual paste flow
+  when the stack is down.
+- **`/reply [number]`** — draft an outbound reply grounded in the case, iterate
+  on it in chat, and log it to the timeline only once you confirm.
 - **`/status [number]`** — print a concise summary of a ticket (state, entry
   count, attachments, last entry). Read-only; infers the ticket from the current
   directory if no number is given.
@@ -85,6 +95,8 @@ tickets/
 ├── skills/                # skills — each a <name>/SKILL.md directory
 ├── scripts/               # Python helpers (referenced via ${CLAUDE_PLUGIN_ROOT})
 ├── templates/             # file templates used by commands
+├── references/            # shared procedure docs commands read on demand
+├── docs/                  # user-facing guides (getting-started.md)
 ├── PORTING.md             # the porting journal — design decisions & progress
 └── README.md
 ```
