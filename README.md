@@ -13,6 +13,7 @@ team installs plugins from.
 | Plugin | What it does |
 | --- | --- |
 | [`p1-updates`](p1-updates/) | Turns a Fathom customer call into a who/what/when P1 status summary, ready to paste into Slack. |
+| [`tickets`](tickets/) | Manage Zendesk support tickets as chronological timelines — logging, drafting replies, KB articles and cross-ticket search. _(work in progress)_ |
 
 ## Installing
 

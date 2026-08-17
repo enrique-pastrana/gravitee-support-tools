@@ -23,6 +23,24 @@
         "incident"
       ],
       "source": "./p1-updates"
+    },
+    {
+      "name": "tickets",
+      "description": "Manage Gravitee Zendesk support tickets as chronological timelines — logging, drafting replies, KB articles and cross-ticket search, driven from Claude Code.",
+      "author": {
+        "name": "Enrique Pastrana",
+        "email": "enrique.pastrana@graviteesource.com"
+      },
+      "category": "productivity",
+      "keywords": [
+        "gravitee",
+        "support",
+        "zendesk",
+        "tickets",
+        "timeline",
+        "kb"
+      ],
+      "source": "./tickets"
     }
   ]
 }
