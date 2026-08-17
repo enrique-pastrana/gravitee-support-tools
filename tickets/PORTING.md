@@ -106,17 +106,38 @@ plugin **skill** (or split it across command prompts). **Undecided.**
   story. Verified by running the script (exit 0, healthy) and via
   `/tickets:tickets-up` in the sandbox. `plugin validate --strict` passes.
 - **2026-08-17** — Branch `add-customer-reply-commands`. Ported the next
-  command slice: `customer` (log inbound message + attachments) + `reply`
-  (draft-and-iterate outbound reply). Both are prompt-only — they add no new
-  scripts, reusing already-ported machinery: `bump_entry` (peek + commit),
-  `fetch_attachments`/`attach` (Zendesk auto-download + manual fallback), and
-  the `entry-snippets.md` templates (`inbound customer message`, `outbound
-  reply draft`). Cleanup on the way in: script/template paths rewritten to
-  `${CLAUDE_PLUGIN_ROOT}/*`, `~/ia-tooling` → `$IA_TOOLING_ROOT/.env`; added the
-  `$TICKETS_ROOT` + thousand-bucket note both other commands carry; gave `reply`
-  an `argument-hint`/`$ARGUMENTS` path (source resolved from cwd only); and made
-  the prompt neutral — replaced `reply`'s Spanish save-confirmation examples
-  (`guárdalo`/`añádelo`/`ya`/`go`, `qué te parece`) with a language-neutral
-  "clearly says to save it" / "asking for your opinion" and pointed the
-  attachment-link guidance at the normalised `path` the helpers print (the same
-  fix `new-ticket` got). `plugin validate --strict` passes.
+  command slice: `reply` (draft-and-iterate outbound reply) plus a **redesigned**
+  version of the source's `customer` command. Design discussed with the user;
+  four decisions shaped it:
+  - **Renamed `customer` → `log-updates`** and broadened its scope. The source
+    `customer` was paste-driven and customer-only; a Zendesk entry can just as
+    well be an internal note, a reply we sent, or a linked Jira. `log-updates`
+    is source-agnostic and **Zendesk-driven**: it calls the `zendesk` MCP
+    (`zendesk_get_ticket_with_attachments`), selects comments newer than
+    `metadata.json`'s `last_comment_id`, and logs each — falling back to the
+    paste flow when the stack is down. Added `last_comment_id` to the metadata
+    template; `new-ticket` seeds it with the opening comment's id.
+  - **Summarise, don't store the literal.** Entries now carry a short summary +
+    a `Key details (verbatim)` block only for load-bearing specifics (errors,
+    versions, config, ids) + a `🔗 Zendesk comment #<id>` footer as the pointer
+    to the exact words. Keeps the timeline cheap for `/reply` and `/status` to
+    read. Reworked the `entry-snippets.md` snippet (`Inbound customer message`
+    → `Incoming update`) accordingly and extended the emoji table (🔒 internal
+    note, 🔗 linked source, 🔔 one-liner).
+  - **Extracted shared logic to `references/`**, read explicitly by the commands
+    (deterministic, unlike ambient skill-loading): `attachments.md` (download
+    with `fetch_attachments.py` → view with `Read`; the MCP only explores, never
+    routes binaries through context) and `classify-entry.md` (substantive vs.
+    non-substantive). `log-updates`, `reply` and `new-ticket` now point here
+    instead of repeating the blocks.
+  - **Bump-first everywhere.** Replaced the peek+commit split with a single
+    `bump_entry` call that returns the consumed `NNN` — fixes a real hole in
+    `reply` (it referenced `[NNN]` with no source) and trades the duplicate-id
+    risk for a harmless gap. Also added a tiny `__main__` CLI to
+    `ticket_paths.py` so all three commands resolve the folder with one short
+    call instead of the inline `python3 -c …` that `status` carried.
+  Verified mechanically against an isolated `TICKETS_ROOT`: the path resolver,
+  `last_comment_id` propagation from the template, and the bump-first cycle
+  (001→002, `next_entry`→3) all work through `${CLAUDE_PLUGIN_ROOT}`. `plugin
+  validate --strict` passes. The interactive Zendesk-pull / draft flow still
+  needs a live-session test.

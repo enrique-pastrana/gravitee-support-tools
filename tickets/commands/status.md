@@ -13,7 +13,7 @@ at, not a report.
    `$TICKETS_ROOT/<thousand>/<number>/` (e.g. `16000/16575/`), not a flat
    `<number>/`. Below, `<ticket>` means that **full folder path** — if you only
    have the number, resolve the path first with the shared helper:
-   `python3 -c "import sys, os; sys.path.insert(0, os.path.join(os.environ['CLAUDE_PLUGIN_ROOT'], 'scripts')); from ticket_paths import resolve_ticket_dir; print(resolve_ticket_dir('<number>'))"`.
+   `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/ticket_paths.py" <number>`.
 2. **Read** `<ticket>/metadata.json` in full. For `timeline.md`, do **not**
    read it end-to-end — it can be 30k+ tokens. Read only what you need:
    - The `## 📋 Executive summary` section (state of play).
@@ -47,7 +47,7 @@ at, not a report.
    - existence checks for `reproduction/` and `kb_article_draft.md`.
 
 4. **Suggest** one or two natural next actions if obvious (e.g., "Customer
-   replied 3 days ago — `/customer` to log a follow-up?"). Skip if nothing
+   replied 3 days ago — `/log-updates` to pull it in?"). Skip if nothing
    stands out.
 
 ## Don'ts

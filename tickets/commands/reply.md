@@ -13,9 +13,13 @@ to scripts and templates there, never inside the tickets workspace.
 
 1. **Resolve the current ticket:** `$ARGUMENTS` if provided, else infer from the
    cwd. If still ambiguous, ask. Tickets are grouped by thousand, so the folder
-   is at `$TICKETS_ROOT/<thousand>/<number>/` (e.g. `16000/16575/`), not a flat
-   `<number>/`. The `bump_entry` helper takes the **bare number** and resolves
-   the bucket itself; timeline edits happen in the ticket folder.
+   is `$TICKETS_ROOT/<thousand>/<number>/` (e.g. `16000/16575/`), not flat.
+   Resolve it once with the shared helper:
+   ```bash
+   python3 "${CLAUDE_PLUGIN_ROOT}/scripts/ticket_paths.py" <number>
+   ```
+   The `bump_entry` helper takes the **bare number** and resolves the bucket
+   itself; timeline edits happen in that folder.
 2. **Read the timeline cheaply, not end-to-end** (large timelines are 30k+
    tokens). Ground the draft in:
    - The `## 📋 Executive summary` section — the current state of play.
@@ -48,12 +52,14 @@ to scripts and templates there, never inside the tickets workspace.
 7. **Wait for explicit confirmation to save.** Only when the user clearly
    says to save/add/log it, proceed with the steps below. Proposing more
    changes or asking for your opinion does NOT mean save.
-8. **Append entry** `[NNN]` to `timeline.md` using the `outbound reply
-   draft` snippet from `${CLAUDE_PLUGIN_ROOT}/templates/entry-snippets.md`. The
-   final agreed draft sits inside the entry as a blockquote.
-9. **Update metadata:** run
-   `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bump_entry.py" <ticket>`.
-10. **Refresh the `## 📋 Executive summary` section** of `timeline.md` if the
+8. **Get the entry number (bump-first) and append.** Run
+   `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bump_entry.py" <ticket>` once — it
+   increments `next_entry`, refreshes `updated_at`, and **prints the number it
+   just consumed**; use that as `NNN`. Then append entry `[NNN]` to
+   `timeline.md` using the `outbound reply draft` snippet from
+   `${CLAUDE_PLUGIN_ROOT}/templates/entry-snippets.md`. The final agreed draft
+   sits inside the entry as a blockquote.
+9. **Refresh the `## 📋 Executive summary` section** of `timeline.md` if the
     reply changes the state of play (asking for new info, proposing a fix,
     confirming resolution). Keep it short: symptom, current hypothesis,
     caveats, pending, status. Skip if the reply doesn't change anything.
@@ -65,11 +71,12 @@ to scripts and templates there, never inside the tickets workspace.
 
 Not every outbound message is a real reply. A pure holding message ("we're
 still investigating, will update soon"), an acknowledgement, or a scheduling
-note carries no technical content. Log those as a **one-line entry** —
-`### [NNN] <date> - 🔔 <one sentence>`, no blockquote, no summary refresh —
-the same way `/customer` treats non-substantive inbound messages. The full
-draft-and-iterate flow above is for replies that actually advance the case
-(analysis, a proposed fix, a request for specific info).
+note carries no technical content. Classify as in
+`${CLAUDE_PLUGIN_ROOT}/references/classify-entry.md`: log those as a **one-line
+entry** — `### [NNN] <date> - 🔔 <one sentence>`, no blockquote, no summary
+refresh — the same way `/log-updates` treats non-substantive incoming messages.
+The full draft-and-iterate flow above is for replies that actually advance the
+case (analysis, a proposed fix, a request for specific info).
 
 ## Don'ts
 

@@ -46,32 +46,27 @@ to scripts and templates there, never inside the tickets workspace.
      anything is unclear; don't invent values). Also set `opened_at` to the
      ticket's Zendesk `created_at` (date part, `YYYY-MM-DD`) — `init_ticket`
      stamps today's date as a placeholder, so overwrite it with the real
-     creation date. Then update the header of `timeline.md` (the
+     creation date. And set `last_comment_id` to the id of the opening comment
+     you're logging as `[001]`, so `/log-updates` knows the baseline and only
+     pulls what comes after. Then update the header of `timeline.md` (the
      `**Customer:**`, `**Product / version:**`, `**Opened:**`, … lines).
-   - Append entry `[001]` to `timeline.md` using the inbound-customer snippet
-     from `${CLAUDE_PLUGIN_ROOT}/templates/entry-snippets.md`, with the
-     customer's opening message (the Zendesk description).
-   - Commit the bump:
-     `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bump_entry.py" <number>`.
+   - **Get the entry number (bump-first) and append.** Run
+     `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bump_entry.py" <number>` once — it
+     increments `next_entry`, refreshes `updated_at`, and **prints the number it
+     just consumed** (`001` on a fresh ticket); use that as `NNN`. Append entry
+     `[NNN]` to `timeline.md` using the `Incoming update` snippet from
+     `${CLAUDE_PLUGIN_ROOT}/templates/entry-snippets.md`: 📥 Customer, a
+     **summary** of the opening message (don't paste the literal Zendesk
+     description), a `Key details (verbatim)` block only for load-bearing
+     specifics, and the `🔗 Zendesk comment #<comment_id>` footer.
 
 5. **Attachments — auto-download from Zendesk first.** Pull every attachment
-   in the thread the customer has sent so far:
+   in the thread so far into entry `[001]`:
    `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/fetch_attachments.py" <number> 1`
-   (no `--comment-id` → scans the whole thread). The helper authenticates
-   against the ia-tooling `.env` (`$IA_TOOLING_ROOT/.env`), downloads only new
-   files (idempotent), and routes each to `received/<comment-date>/001_<name>`.
-   It prints JSON with the saved paths.
-   - **Use the `path` values from that JSON verbatim** for the timeline's
-     attachment links. The helper lowercases and normalises filenames and adds
-     the `NNN_` prefix, so the on-disk name differs from the original Zendesk
-     filename — don't reconstruct the links from the original name or they
-     won't resolve.
-   - **Fall back** if it errors (stack down / no creds): ask where the files
-     are (path, `~/Downloads`, drag&drop) and move each via
-     `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/attach.py" <number> 1 <source>`
-     (it prints the normalised destination path — use that one).
-   - For images (downloaded or pasted), read them with the Read tool and add a
-     one-line description to the entry's attachments block.
+   (no `--comment-id` → scans the whole thread). Follow
+   `${CLAUDE_PLUGIN_ROOT}/references/attachments.md` for the full procedure —
+   using the printed `path` values verbatim for the links, the manual
+   `attach.py` fallback if it errors, and how to read what you downloaded.
 
 6. **Check for similar past tickets.** Use two sources and merge:
    - **Semantic:** call the `vectordb` MCP `rag_search` tool with the ticket's
@@ -89,7 +84,7 @@ to scripts and templates there, never inside the tickets workspace.
    - Don't auto-add anything to the index here; this step is read-only.
 
 7. **Summarise:** print the path to the new ticket and ask what to do next
-   (`/investigate`, `/customer`, `/reproduce`, …).
+   (`/investigate`, `/log-updates`, `/reproduce`, …).
 
 ## Don'ts
 
