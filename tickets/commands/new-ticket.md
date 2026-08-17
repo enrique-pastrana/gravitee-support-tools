@@ -43,8 +43,11 @@ to scripts and templates there, never inside the tickets workspace.
 4. **Fill the ticket from what you pulled (or what the user pasted):**
    - Update `metadata.json` with the parsed fields (`subject`, `customer`,
      `product`, `version`, `priority`, `zendesk_url`, `tags`; ask back if
-     anything is unclear; don't invent values). Also update the header of
-     `timeline.md` (the `**Customer:**`, `**Product / version:**`, … lines).
+     anything is unclear; don't invent values). Also set `opened_at` to the
+     ticket's Zendesk `created_at` (date part, `YYYY-MM-DD`) — `init_ticket`
+     stamps today's date as a placeholder, so overwrite it with the real
+     creation date. Then update the header of `timeline.md` (the
+     `**Customer:**`, `**Product / version:**`, `**Opened:**`, … lines).
    - Append entry `[001]` to `timeline.md` using the inbound-customer snippet
      from `${CLAUDE_PLUGIN_ROOT}/templates/entry-snippets.md`, with the
      customer's opening message (the Zendesk description).
@@ -58,9 +61,15 @@ to scripts and templates there, never inside the tickets workspace.
    against the ia-tooling `.env` (`$IA_TOOLING_ROOT/.env`), downloads only new
    files (idempotent), and routes each to `received/<comment-date>/001_<name>`.
    It prints JSON with the saved paths.
+   - **Use the `path` values from that JSON verbatim** for the timeline's
+     attachment links. The helper lowercases and normalises filenames and adds
+     the `NNN_` prefix, so the on-disk name differs from the original Zendesk
+     filename — don't reconstruct the links from the original name or they
+     won't resolve.
    - **Fall back** if it errors (stack down / no creds): ask where the files
      are (path, `~/Downloads`, drag&drop) and move each via
-     `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/attach.py" <number> 1 <source>`.
+     `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/attach.py" <number> 1 <source>`
+     (it prints the normalised destination path — use that one).
    - For images (downloaded or pasted), read them with the Read tool and add a
      one-line description to the entry's attachments block.
 

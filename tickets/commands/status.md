@@ -39,8 +39,11 @@ at, not a report.
    ```
 
    Counts come from filesystem:
-   - `find <ticket>/received -type f 2>/dev/null | wc -l` for total files.
-   - `ls <ticket>/received/ 2>/dev/null | wc -l` for day count.
+   - `find <ticket>/received -type f ! -name '.zd_attachments.json' 2>/dev/null | wc -l`
+     for total files. The `! -name` excludes `fetch_attachments`' idempotency
+     ledger, which isn't an attachment and would otherwise inflate the count.
+   - `ls <ticket>/received/ 2>/dev/null | wc -l` for day count (`ls` skips the
+     dotfile ledger already).
    - existence checks for `reproduction/` and `kb_article_draft.md`.
 
 4. **Suggest** one or two natural next actions if obvious (e.g., "Customer
