@@ -7,8 +7,9 @@ Code.
 
 > **Status: work in progress.** This plugin is being ported from the standalone
 > `~/TICKETS` workspace into a portable marketplace plugin. The MCP wiring to
-> `ia-tooling` is done and tested; the commands are not ported yet — see
-> [PORTING.md](PORTING.md) for the plan and progress.
+> `ia-tooling` is done and tested, and the first commands (`new-ticket`,
+> `status`) are ported; the rest are on the way — see [PORTING.md](PORTING.md)
+> for the plan and progress.
 
 ## What it will do
 
@@ -20,7 +21,23 @@ log access — with a manual fallback when the stack is not running.
 
 ## Using it
 
-_To be documented as commands are ported._
+Ticket data lives in **your** tickets workspace, not in the plugin. By default
+that is `~/TICKETS`; point it elsewhere with `TICKETS_ROOT`:
+
+```bash
+export TICKETS_ROOT="$HOME/TICKETS"   # optional; this is the default
+```
+
+Commands available so far:
+
+- **`/new-ticket <number>`** — start a new ticket. Creates
+  `$TICKETS_ROOT/<thousand>/<number>/` with `timeline.md` and `metadata.json`,
+  pulls the ticket subject/customer/priority and attachments from Zendesk (with
+  a manual paste fallback when the stack is down), logs the opening message as
+  entry `[001]`, and surfaces similar past tickets.
+- **`/status [number]`** — print a concise summary of a ticket (state, entry
+  count, attachments, last entry). Read-only; infers the ticket from the current
+  directory if no number is given.
 
 ## Requirements
 

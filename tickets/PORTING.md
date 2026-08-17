@@ -81,3 +81,20 @@ plugin **skill** (or split it across command prompts). **Undecided.**
   tested from the clean `sandbox/` with `--plugin-dir`: 4/5 servers connected
   (kapa parked). Documented the `IA_TOOLING_ROOT` requirement in the README.
   Commands, agent, scripts, templates and the `CLAUDE.md` contract still to port.
+- **2026-08-17** — Branch `add-tickets-core-commands`. Ported the first command
+  slice: `new-ticket` + `status`. Scope grew from the two "base" scripts to the
+  **five** the commands actually need — `new-ticket` pulls in `bump_entry`
+  (entry counter), `fetch_attachments` (Zendesk auto-download) and `attach`
+  (manual fallback), on top of `ticket_paths` + `init_ticket`; kept the slice
+  whole so the merged command is fully usable rather than referencing scripts
+  that don't exist yet. Cleanup on the way in: command paths rewritten from
+  `~/TICKETS/_system/scripts/*` to `${CLAUDE_PLUGIN_ROOT}/scripts/*`, templates
+  to `${CLAUDE_PLUGIN_ROOT}/templates/*`, `~/ia-tooling` → `${IA_TOOLING_ROOT}`;
+  dropped `new-ticket`'s redundant manual `ls` existence check (init_ticket
+  already refuses to overwrite); made `fetch_attachments` default its `.env` to
+  `$IA_TOOLING_ROOT/.env` to match the `.mcp.json` convention; `_kb` index read
+  now guarded as optional (user data, may not exist). Templates ported:
+  `timeline.md`, `metadata.json`, `entry-snippets.md`. Verified end-to-end
+  against a temp `TICKETS_ROOT`: bucket creation, template render, entry bump,
+  overwrite refusal, filename normalisation, and the `status` path resolver all
+  work through `${CLAUDE_PLUGIN_ROOT}`; `plugin validate --strict` passes.

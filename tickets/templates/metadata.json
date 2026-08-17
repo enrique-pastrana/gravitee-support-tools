@@ -1,0 +1,18 @@
+{
+  "ticket_id": "{{ticket_id}}",
+  "zendesk_url": "{{zendesk_url}}",
+  "subject": "{{subject}}",
+  "customer": "{{customer}}",
+  "product": "{{product}}",
+  "version": "{{version}}",
+  "priority": "{{priority}}",
+  "status": "investigating",
+  "opened_at": "{{opened_at}}",
+  "updated_at": "{{opened_at}}",
+  "resolved_at": null,
+  "resolution_time_hours": null,
+  "tags": [],
+  "related_tickets": [],
+  "kb_candidate": false,
+  "next_entry": 1
+}
