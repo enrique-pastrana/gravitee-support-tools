@@ -69,6 +69,35 @@ style, ticket conventions, MCP usage, pre-authorised actions). A plugin cannot
 inject a root `CLAUDE.md` into the user's directory. Candidate: turn it into a
 plugin **skill** (or split it across command prompts). **Undecided.**
 
+## Backlog / ideas (user, 2026-08-17)
+
+Captured at the close of the PR #4 session — to shape upcoming slices, not yet
+scheduled:
+
+- **KB articles area.** Port the KB workflow (`kb`, `kb-candidate`, `kb-shared`)
+  — a proper "KB articles" section built from resolved tickets.
+- **`investigate`** — port the investigation command.
+- **`reproduce`** — port the reproduction command. **Design work needed first:**
+  think through *how* we tackle reproduction (what a repro run actually does,
+  what it needs, how it records results) before porting — not a blind copy.
+- **Environment variables audit.** Review carefully **all** the env vars the
+  plugin needs to work end-to-end (`IA_TOOLING_ROOT`, `TICKETS_ROOT`,
+  `IA_TOOLING_ENV`, Zendesk auth in the ia-tooling `.env`, …) — confirm the full
+  set, defaults, and failure modes.
+- **Clear onboarding docs.** Explain all of the above (setup, env vars, the repro
+  approach) **simply and clearly for a brand-new user** — extend
+  `docs/getting-started.md` so someone using it for the first time can get
+  running without prior context.
+- **Copy/paste-out commands (NEW, not in the source set).** Commands that emit
+  ready-to-paste text for external trackers: a **Jira bug** report, a **feature
+  request**, etc. The user will provide the **templates** for each; the command's
+  job is to fill a template from the ticket timeline and hand back the text to
+  paste. Likely new `templates/` + a small command per output type.
+- **P1 section (NEW).** Even though `p1-updates` already ships separately, the
+  user expects to need a **P1-specific section** inside (or alongside) this
+  plugin. Scope TBD — clarify what it should cover vs. what `p1-updates` already
+  does, to avoid overlap.
+
 ## Progress log
 
 - **2026-08-17** — Created branch `add-tickets-plugin`. Scaffolded the empty
@@ -166,3 +195,17 @@ plugin **skill** (or split it across command prompts). **Undecided.**
     now cross-checks the cursor against the timeline's `🔗 Zendesk comment #<id>`
     footers and, on a gap, asks the user to backfill from the last logged id or
     trust the cursor. `plugin validate --strict` passes.
+- **2026-08-18** — Branch `document-env-configuration`. Documented the plugin's
+  configuration in one visible place — addresses backlog items **env-vars audit**
+  and **onboarding docs**. Added a `## Configuration` section to the README with
+  the full env-var table (`IA_TOOLING_ROOT`, `TICKETS_ROOT`, `IA_TOOLING_ENV`,
+  `CLAUDE_PLUGIN_ROOT`) — required?/default/what it controls/failure mode — plus
+  a sub-table for the Zendesk keys that live inside the `ia-tooling` `.env`
+  (`ZENDESK_AUTH_MODE`/`_EMAIL`/`_API_TOKEN`/`_OAUTH_ACCESS_TOKEN`/`_BASE_URL`).
+  Design decision confirmed with the user: **no plugin-owned config file** and
+  **not folded into the ia-tooling `.env`** — `IA_TOOLING_ROOT` is chicken-and-egg
+  (needed to *find* ia-tooling), that `.env` is a secrets file (path config
+  doesn't belong there), and the scripts read the shell env (`os.environ`), not
+  that file, so it wouldn't be picked up anyway. Shell env vars stay the
+  mechanism; `getting-started.md` now covers `IA_TOOLING_ENV` and links to the
+  README table as the authoritative reference.
