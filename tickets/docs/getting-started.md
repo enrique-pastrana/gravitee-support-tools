@@ -51,7 +51,10 @@ the timeline cheap to read.
 
 ## One-time setup
 
-You need two things set once, and the backing stack running.
+You need two things set once, and the backing stack running. Everything is
+configured with **shell environment variables** — there's no config file to
+edit. (For the full list, defaults and failure modes, see
+[Configuration in the README](../README.md#configuration).)
 
 **1. Tell the plugin where your ticket data goes** (optional — defaults to
 `~/TICKETS`):
@@ -66,6 +69,15 @@ reaches Zendesk, search, etc.):
 ```bash
 # add to ~/.zshrc or ~/.bashrc
 export IA_TOOLING_ROOT="$HOME/ia-tooling"
+```
+
+Your Zendesk credentials aren't set here — they live in the `ia-tooling` `.env`
+file, which the plugin finds at `$IA_TOOLING_ROOT/.env` by default. Only if that
+file lives somewhere else do you need to point at it:
+
+```bash
+# optional — only if your ia-tooling .env is not at $IA_TOOLING_ROOT/.env
+export IA_TOOLING_ENV="/path/to/your/.env"
 ```
 
 **3. Start the backing stack** (Docker + Ollama + the local services), from a

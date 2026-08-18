@@ -22,14 +22,46 @@ and cross-ticket search. Optionally backed by the `ia-tooling`
 (`gravitee-local-tooling`) stack for live Zendesk fetch, semantic RAG search and
 log access — with a manual fallback when the stack is not running.
 
-## Using it
+## Configuration
 
-Ticket data lives in **your** tickets workspace, not in the plugin. By default
-that is `~/TICKETS`; point it elsewhere with `TICKETS_ROOT`:
+The plugin is configured through **shell environment variables** — there is no
+plugin config file to edit. Set them once (in `~/.zshrc` / `~/.bashrc`); every
+one has a sensible default except `IA_TOOLING_ROOT`, which each user must point
+at their own `ia-tooling` checkout.
+
+| Variable | Required? | Default | What it controls | If unset / wrong |
+|---|---|---|---|---|
+| `IA_TOOLING_ROOT` | **Yes** | `~/ia-tooling` | Locates your local `ia-tooling` checkout — used by `.mcp.json` to start the MCP servers and by the scripts to reach the stack. | `${IA_TOOLING_ROOT}` can't expand, so the Zendesk / search / GitHub / Atlassian MCP servers fail to start. Live Zendesk fetch and cross-ticket search stop working (commands fall back to their manual paste flow). |
+| `TICKETS_ROOT` | No | `~/TICKETS` | Where ticket folders are stored — **your** workspace, outside the plugin. | Falls back to `~/TICKETS`. |
+| `IA_TOOLING_ENV` | No | `$IA_TOOLING_ROOT/.env` | Path to the `ia-tooling` `.env` file that holds your Zendesk credentials (read by `fetch_attachments.py` to download attachments). | Falls back to `$IA_TOOLING_ROOT/.env`. If that file is missing, attachment downloads fail with a "missing ZENDESK_* in env" error. |
+| `CLAUDE_PLUGIN_ROOT` | Automatic | — | Locates the plugin's own bundled `scripts/` and `templates/`. **Set by Claude Code — you never touch this.** | n/a — managed by Claude Code. |
 
 ```bash
-export TICKETS_ROOT="$HOME/TICKETS"   # optional; this is the default
+# in ~/.zshrc (or ~/.bashrc)
+export IA_TOOLING_ROOT="$HOME/ia-tooling"   # required — point at your ia-tooling
+export TICKETS_ROOT="$HOME/TICKETS"         # optional — this is the default
+# export IA_TOOLING_ENV="$HOME/ia-tooling/.env"   # optional — only if your .env lives elsewhere
 ```
+
+### Zendesk credentials (inside the `ia-tooling` `.env`)
+
+These are **not** shell variables — they live inside the `ia-tooling` `.env`
+file (the one `IA_TOOLING_ENV` points at) and are read from there. They are your
+Zendesk auth; the plugin does not manage them, `ia-tooling` does:
+
+| Key | Default | Purpose |
+|---|---|---|
+| `ZENDESK_AUTH_MODE` | `api-token` | `api-token` or `oauth`. |
+| `ZENDESK_EMAIL` | — | Your Zendesk email (api-token mode). |
+| `ZENDESK_API_TOKEN` | — | Zendesk API token (api-token mode). |
+| `ZENDESK_OAUTH_ACCESS_TOKEN` | — | Bearer token (oauth mode). |
+| `ZENDESK_BASE_URL` | `https://graviteesource.zendesk.com` | Your Zendesk instance URL. |
+
+## Using it
+
+Ticket data lives in **your** tickets workspace, not in the plugin — set its
+location with `TICKETS_ROOT` (see [Configuration](#configuration) above; defaults
+to `~/TICKETS`).
 
 Commands available so far:
 
