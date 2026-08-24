@@ -18,13 +18,18 @@ Start a new ticket.
    ```bash
    python3 "${CLAUDE_PLUGIN_ROOT}/scripts/init_ticket.py" <number>
    ```
-   Prints the path it created. On an "already exists" error: **stop**, tell the
-   user, overwrite nothing.
-   On success, make it the current ticket so later commands don't need the number
-   again (see `${CLAUDE_PLUGIN_ROOT}/references/resolve-ticket.md`):
-   ```bash
-   python3 "${CLAUDE_PLUGIN_ROOT}/scripts/current_ticket.py" set <number>
-   ```
+   - **On success** it prints the path it created. Make it the current ticket so
+     later commands don't need the number again (see
+     `${CLAUDE_PLUGIN_ROOT}/references/resolve-ticket.md`):
+     ```bash
+     python3 "${CLAUDE_PLUGIN_ROOT}/scripts/current_ticket.py" set <number>
+     ```
+   - **If it already exists** (the script exits non-zero, refusing to overwrite):
+     don't stop cold — the ticket is already tracked. Overwrite nothing; instead
+     **offer to resume it**: set it as the current ticket (`current_ticket.py set
+     <number>`), read its `metadata.json` and give a one-line `/status`-style
+     recap, and suggest `/log-updates` to fold in anything new since. Then skip
+     the rest of this command — steps 3–9 are for a fresh ticket.
 
 3. **Pull from Zendesk** — fetch ticket `<number>` (detail + comments) via the
    `zendesk` MCP. Extract: `subject`, `customer` (org or requester), `priority`,
@@ -77,13 +82,22 @@ Start a new ticket.
    — why the scoping matters, using the printed `path` values verbatim for links,
    the `attach.py` fallback, and reading what you downloaded.
 
-8. **Similar past tickets** — read-only, merge two sources:
-   - **Semantic:** `vectordb` MCP `rag_search` on the symptom / error text (skip
-     if unavailable).
-   - **Index:** read `$TICKETS_ROOT/_kb/tickets-index.md` if it exists; match on
-     product/version, component, or overlapping symptom keywords.
-   - List any relevant hits (id, status, one-line symptom) so the user can
-     decide. If none, say so in one line — don't stretch. Add nothing here.
+8. **Prior art — read-only, search by literals (not a paraphrase):**
+   - **Extract literals** from the opening message / logs: exact error string
+     (`StackOverflowError`, `Connection refused`), log line, exception class,
+     config key, component. Literal > paraphrase.
+   - **One `rag_search` per literal** via `vectordb` MCP — not one blob. Skip if
+     unavailable.
+   - **Score by mode:**
+     - `hybrid=true` (default) → **positional** score (~0.0164, 0.0161… every
+       query). Never threshold it — judge by **reading** the source/path.
+     - `hybrid=false` → real cosine (0–1): ≳0.6 worth a look, low-0.5s weak.
+   - **Index:** if `$TICKETS_ROOT/_kb/tickets-index.md` exists, match on
+     product/version, component, or symptom keywords.
+   - **Keep** only genuinely relevant hits (id/path, status, one-line why).
+   - Corpus is code/config today → expect **code/doc** hits (feed `/investigate`);
+     past tickets surface here once indexed. Nothing relevant → say so in one line.
+   - Add nothing to the timeline here.
 
 9. **Finish** — print the ticket path and suggest a next step (`/investigate`,
    `/log-updates`, `/reproduce`).
