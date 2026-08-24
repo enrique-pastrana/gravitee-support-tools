@@ -61,8 +61,20 @@ def build_header(meta: dict) -> list[str]:
 
 
 def main() -> int:
+    # `--label <status>` prints just the display label for a status value and
+    # exits, touching no files. It lets read-only callers (e.g. /status) show
+    # the same "🟡 Investigating" the header uses without duplicating the map —
+    # STATUS_DISPLAY stays the single source of truth for status → label.
+    if sys.argv[1:2] == ["--label"]:
+        if len(sys.argv) != 3:
+            print(f"usage: {sys.argv[0]} --label <status>", file=sys.stderr)
+            return 2
+        print(status_display(sys.argv[2]))
+        return 0
+
     if len(sys.argv) != 2:
-        print(f"usage: {sys.argv[0]} <ticket-number>", file=sys.stderr)
+        print(f"usage: {sys.argv[0]} <ticket-number>\n"
+              f"       {sys.argv[0]} --label <status>", file=sys.stderr)
         return 2
 
     ticket_dir = resolve_ticket_dir(sys.argv[1])
