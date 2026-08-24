@@ -82,22 +82,16 @@ Start a new ticket.
    — why the scoping matters, using the printed `path` values verbatim for links,
    the `attach.py` fallback, and reading what you downloaded.
 
-8. **Prior art — read-only, search by literals (not a paraphrase):**
-   - **Extract literals** from the opening message / logs: exact error string
-     (`StackOverflowError`, `Connection refused`), log line, exception class,
-     config key, component. Literal > paraphrase.
-   - **One `rag_search` per literal** via `vectordb` MCP — not one blob. Skip if
-     unavailable.
-   - **Score by mode:**
-     - `hybrid=true` (default) → **positional** score (~0.0164, 0.0161… every
-       query). Never threshold it — judge by **reading** the source/path.
-     - `hybrid=false` → real cosine (0–1): ≳0.6 worth a look, low-0.5s weak.
-   - **Index:** if `$TICKETS_ROOT/_kb/tickets-index.md` exists, match on
+8. **Prior art — read-only.** Search the `vectordb` MCP for precedents to the
+   opening symptom, following
+   `${CLAUDE_PLUGIN_ROOT}/references/search-precedents.md` (query by literals,
+   one `rag_search` per literal, how to read the hybrid-vs-cosine score). Skip if
+   the MCP is down.
+   - Also check `$TICKETS_ROOT/_kb/tickets-index.md` if it exists — match on
      product/version, component, or symptom keywords.
-   - **Keep** only genuinely relevant hits (id/path, status, one-line why).
-   - Corpus is code/config today → expect **code/doc** hits (feed `/investigate`);
-     past tickets surface here once indexed. Nothing relevant → say so in one line.
-   - Add nothing to the timeline here.
+   - Keep only genuinely relevant hits (id/path, one-line why); nothing relevant
+     → say so in one line. **Add nothing to the timeline here** — real digging is
+     `/investigate`'s job.
 
 9. **Finish** — print the ticket path and suggest a next step (`/investigate`,
    `/log-updates`, `/reproduce`).
