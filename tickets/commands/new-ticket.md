@@ -83,21 +83,21 @@ Start a new ticket.
    the `attach.py` fallback, and reading what you downloaded.
 
 8. **Prior art — read-only, search by literals (not a paraphrase):**
-   - **Extract the high-signal literals** from the opening message / logs: the
-     exact error string (e.g. `StackOverflowError`, `Connection refused`), the
-     specific log line, the exception class, a config key or component name. A
-     vague paraphrase gives flat, low-score hits; a literal is what the hybrid
-     keyword side can actually match.
-   - **One `rag_search` per literal** via the `vectordb` MCP (`hybrid` is on by
-     default), not one averaged blob (skip if unavailable). The index is mostly
-     code/config today, so hits point at the **code/doc** behind the error —
-     useful for `/investigate`; once closed tickets are indexed the same query
-     will surface past tickets too.
-   - **Index:** read `$TICKETS_ROOT/_kb/tickets-index.md` if it exists; match on
-     product/version, component, or overlapping symptom keywords.
-   - **Be score-aware:** drop weak, uniform hits; keep only what's genuinely
-     relevant (id/path, status, one-line why). If nothing clears the bar, say so
-     in one line — don't stretch. Add nothing to the timeline here.
+   - **Extract literals** from the opening message / logs: exact error string
+     (`StackOverflowError`, `Connection refused`), log line, exception class,
+     config key, component. Literal > paraphrase.
+   - **One `rag_search` per literal** via `vectordb` MCP — not one blob. Skip if
+     unavailable.
+   - **Score by mode:**
+     - `hybrid=true` (default) → **positional** score (~0.0164, 0.0161… every
+       query). Never threshold it — judge by **reading** the source/path.
+     - `hybrid=false` → real cosine (0–1): ≳0.6 worth a look, low-0.5s weak.
+   - **Index:** if `$TICKETS_ROOT/_kb/tickets-index.md` exists, match on
+     product/version, component, or symptom keywords.
+   - **Keep** only genuinely relevant hits (id/path, status, one-line why).
+   - Corpus is code/config today → expect **code/doc** hits (feed `/investigate`);
+     past tickets surface here once indexed. Nothing relevant → say so in one line.
+   - Add nothing to the timeline here.
 
 9. **Finish** — print the ticket path and suggest a next step (`/investigate`,
    `/log-updates`, `/reproduce`).
