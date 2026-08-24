@@ -30,6 +30,8 @@ from ticket_paths import resolve_ticket_dir
 STATUS_DISPLAY = {
     "investigating": "🟡 Investigating",
     "waiting": "⏳ Waiting",
+    "pending": "⏳ Pending",
+    "on hold": "⏸️ On hold",
     "blocked": "🔴 Blocked",
     "resolved": "🟢 Resolved",
     "closed": "✅ Closed",
