@@ -41,6 +41,20 @@ python3 "${CLAUDE_PLUGIN_ROOT}/scripts/fetch_attachments.py" <ticket> <NNN> [--c
   `NNN_` prefix, so the on-disk name differs from the original Zendesk filename
   — don't reconstruct links from the original name or they won't resolve.
 
+## Which entry owns an attachment
+
+An attachment belongs to the entry for the comment it arrived on — so it's
+downloaded (and `NNN_`-prefixed) under that entry's number, not lumped elsewhere.
+
+This is why `/new-ticket` scopes the opening fetch with `--comment-id <opening>`:
+`[001]` is only the opening message, so only its attachments belong there. If
+you instead scanned the whole thread at ticket-creation time, every attachment
+would be tagged `001_` **and recorded in the idempotency ledger**
+(`received/.zd_attachments.json`) — so when `/log-updates` later logs those
+comments it would find them already downloaded, skip them, and the later entries
+would lose their attachment links. Let each comment's attachments be pulled, under
+their own entry number, by the command that logs that comment.
+
 ## Fallback (stack down / no creds / MCP unavailable)
 
 If `fetch_attachments.py` errors, move files in manually — ask the user for the
