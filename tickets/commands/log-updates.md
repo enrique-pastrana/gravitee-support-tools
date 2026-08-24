@@ -16,9 +16,9 @@ lives in Zendesk and each entry keeps the `comment_id` as the pointer back to it
 
 ## Resolve the ticket
 
-`$ARGUMENTS` if provided, else infer from the cwd. If still ambiguous, ask.
-Resolve the ticket folder once with the shared helper (tickets are grouped by
-thousand, so the folder is `$TICKETS_ROOT/<thousand>/<number>/`, not flat):
+Follow `${CLAUDE_PLUGIN_ROOT}/references/resolve-ticket.md`: `$ARGUMENTS` >
+current ticket > cwd > ask; state which ticket and how. `/log-updates`
+**writes**, so run the mismatch guards before logging. Resolve the folder once:
 
 ```bash
 python3 "${CLAUDE_PLUGIN_ROOT}/scripts/ticket_paths.py" <number>

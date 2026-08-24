@@ -8,11 +8,11 @@ at, not a report.
 
 ## Steps
 
-1. **Resolve the ticket:** `$ARGUMENTS` if provided, else infer from cwd. Note
-   tickets are grouped by thousand, so the folder is at
-   `$TICKETS_ROOT/<thousand>/<number>/` (e.g. `16000/16575/`), not a flat
-   `<number>/`. Below, `<ticket>` means that **full folder path** — if you only
-   have the number, resolve the path first with the shared helper:
+1. **Resolve the ticket** — follow
+   `${CLAUDE_PLUGIN_ROOT}/references/resolve-ticket.md`: `$ARGUMENTS` > current
+   ticket > cwd > ask; state which ticket and how. `/status` is **read-only**, so
+   skip the write guards. Below, `<ticket>` means the **full folder path** —
+   resolve it from the number with
    `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/ticket_paths.py" <number>`.
 2. **Read** `<ticket>/metadata.json` in full. For `timeline.md`, do **not**
    read it end-to-end — it can be 30k+ tokens. Read only what you need:
