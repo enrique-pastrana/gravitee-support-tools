@@ -12,10 +12,10 @@ You are drafting an outbound reply to the customer and logging it in the timelin
 
 ## Steps
 
-1. **Resolve the ticket** — `$ARGUMENTS` if given, else infer from the cwd, else
-   ask. Tickets are grouped by thousand, so the folder is
-   `$TICKETS_ROOT/<thousand>/<number>/` (e.g. `16000/16575/`), not flat. Resolve
-   it once:
+1. **Resolve the ticket** — follow `${CLAUDE_PLUGIN_ROOT}/references/resolve-ticket.md`:
+   `$ARGUMENTS` > current ticket > cwd > ask; state which ticket you resolved and
+   how. `/reply` **writes**, so run the mismatch guards (explicit ≠ current, cwd ≠
+   current, ticket doesn't exist) before drafting. Resolve the folder once:
    ```bash
    python3 "${CLAUDE_PLUGIN_ROOT}/scripts/ticket_paths.py" <number>
    ```

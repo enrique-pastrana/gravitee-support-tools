@@ -20,6 +20,11 @@ Start a new ticket.
    ```
    Prints the path it created. On an "already exists" error: **stop**, tell the
    user, overwrite nothing.
+   On success, make it the current ticket so later commands don't need the number
+   again (see `${CLAUDE_PLUGIN_ROOT}/references/resolve-ticket.md`):
+   ```bash
+   python3 "${CLAUDE_PLUGIN_ROOT}/scripts/current_ticket.py" set <number>
+   ```
 
 3. **Pull from Zendesk** — fetch ticket `<number>` (detail + comments) via the
    `zendesk` MCP. Extract: `subject`, `customer` (org or requester), `priority`,
