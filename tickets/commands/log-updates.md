@@ -90,9 +90,12 @@ themselves); `<dir>` is that resolved folder (where `timeline.md` /
       - `🔗 Zendesk comment #<comment_id>` footer.
       New entries go at the end of `## 🕐 Chronological timeline`.
 
-5. **Update the baseline.** Set `last_comment_id` in `<dir>/metadata.json` to
-   the id of the newest comment you just processed. (`bump_entry` already
-   refreshed `updated_at`.)
+5. **Update the baseline** — one call, don't hand-edit the JSON:
+   ```bash
+   python3 "${CLAUDE_PLUGIN_ROOT}/scripts/set_meta.py" <ticket> --set last_comment_id=<newest_processed_comment_id>
+   ```
+   Set it to the id of the newest comment you just processed. (`bump_entry`
+   already refreshed `updated_at`.)
 
 6. **Refresh the `## 📋 Executive summary`** of `timeline.md` if the new
    activity changes the state of play (a new symptom, a customer confirmation, a
