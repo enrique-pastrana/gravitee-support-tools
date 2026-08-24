@@ -22,7 +22,14 @@ to what Zendesk shows.
    python3 "${CLAUDE_PLUGIN_ROOT}/scripts/ticket_paths.py" <number>
    ```
 
-2. **Read the Zendesk terminal status** — the source of truth for whether this
+2. **Already closed? Stop before writing anything.** Read `metadata.json`; if its
+   `status` is already `resolved` or `closed`, this ticket is closed — say so
+   (with `resolved_at`) and **stop**. Do **not** bump, append an entry, or
+   re-stamp: a second pass would leave a duplicate closing entry. Re-close only
+   if the user **explicitly** asks to; only then continue and add `--force` to
+   the `close_meta.py` call in step 5.
+
+3. **Read the Zendesk terminal status** — the source of truth for whether this
    ticket is really done. Call the Zendesk MCP (`zendesk_get_ticket_with_attachments`,
    or a lighter get) and map its status:
    - Zendesk **solved** → local `resolved`
@@ -35,12 +42,12 @@ to what Zendesk shows.
      terminal state applies (solved → `resolved`, closed → `closed`), like
      `/log-updates`' paste-flow fallback. Don't block the close on the stack.
 
-3. **Confirm the customer agreed.** A ticket is only closed once the customer has
+4. **Confirm the customer agreed.** A ticket is only closed once the customer has
    confirmed the resolution (a solved/closed Zendesk status is strong evidence).
    If that confirmation isn't already in the timeline or Zendesk, suggest
    `/log-updates` to pull it in first — **don't** close without it.
 
-4. **Append the closing entry (bump-first).**
+5. **Append the closing entry (bump-first).**
    ```bash
    python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bump_entry.py" <number>
    ```
@@ -50,7 +57,7 @@ to what Zendesk shows.
    each: **Root cause**, **Fix applied**, **KB candidate** (yes/no — ask the
    user).
 
-5. **Stamp the metadata (deterministic, atomic) then re-render the header.**
+6. **Stamp the metadata (deterministic, atomic) then re-render the header.**
    Don't hand-edit the JSON or the badge, and don't hand-compute the elapsed
    time:
    ```bash
@@ -60,18 +67,19 @@ to what Zendesk shows.
    `close_meta.py` sets `status`, `resolved_at` (now), computes
    `resolution_time_hours` from `opened_at`, refreshes `updated_at`, and — only
    with `--kb-candidate` — sets `kb_candidate=true` (it never downgrades a
-   previous yes). Pass `--kb-candidate` when step 4's KB answer is yes. It
-   refuses if the ticket is already terminal (pass `--force` to re-close).
-   `render_header.py` rebuilds the timeline header from the metadata, so the
-   header, `/status`, and the metadata never drift — `resolved` renders as
-   🟢 Resolved, `closed` as ✅ Closed.
+   previous yes). Pass `--kb-candidate` when step 5's KB answer is yes. Add
+   `--force` **only** when step 2 sent you here for an explicit re-close;
+   otherwise never — the guard is there on purpose. `render_header.py` rebuilds
+   the timeline header from the metadata, so the header, `/status`, and the
+   metadata never drift — `resolved` renders as 🟢 Resolved, `closed` as
+   ✅ Closed.
 
-6. **Refresh the executive summary.** Update the `## 📋 Executive summary` prose
+7. **Refresh the executive summary.** Update the `## 📋 Executive summary` prose
    to read as a closed case: final root cause, the fix, and the terminal status.
    It's the single source of truth `/status` reads instead of the full timeline,
    so leave it self-contained and current.
 
-7. **Suggest natural follow-ups** (don't run them — these commands aren't ported
+8. **Suggest natural follow-ups** (don't run them — these commands aren't ported
    yet):
    - If this is a KB candidate: `/kb` to draft a knowledge-base article from the
      timeline.
@@ -81,6 +89,8 @@ to what Zendesk shows.
 ## Don'ts
 
 - Don't close a ticket the customer hasn't confirmed resolved.
+- Don't re-close an already-terminal ticket unless the user explicitly asks —
+  it duplicates the closing entry.
 - Don't delete anything. Closing is a state change, not a cleanup.
 - Don't hand-edit `metadata.json` or the timeline header — use `close_meta.py` +
   `render_header.py`.
