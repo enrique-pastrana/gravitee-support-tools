@@ -45,9 +45,11 @@ Read-only commands (`/status`) can skip these. Commands that write
 (`/new-ticket`, `/log-updates`, `/reply`) must run them:
 
 - **Explicit ≠ current** — `$ARGUMENTS` is set and differs from the current
-  ticket. The explicit number still wins, but say so and confirm before writing:
-  *"About to write to `<args>`, but the current ticket is `<current>`.
-  Continue?"* Don't overwrite the pointer.
+  ticket. The explicit number still wins, but **stop and get a yes** before
+  writing anything: *"About to write to `<args>`, but the current ticket is
+  `<current>`. Continue?"* — a real gate, not a note you sail past. This matters
+  most for `/log-updates`, which otherwise writes with no natural pause. Don't
+  overwrite the pointer either way.
 - **cwd ≠ current** — the shell sits in one ticket's folder but the current
   ticket points elsewhere. Don't guess — ask which one the user means.
 - **Resolved ticket doesn't exist** — for commands that need an existing ticket
@@ -65,6 +67,9 @@ Write the pointer (`current_ticket.py set <number>`) when:
 - **`/new-ticket`** creates a ticket → set it to that number.
 - the **user says they're working on a ticket** — "let's work on 17337",
   "switch to 16575", "trabajamos en el ticket 17337" → set it.
+  - If that ticket **has no folder yet**, don't silently point at nothing: say
+    it doesn't exist and offer to create it (`/new-ticket <number>`) or to set
+    the pointer anyway. Let the user pick.
 
 Do **not** move the pointer just because a command got an explicit number
 (guard 1) — that's a one-off, not a switch.
