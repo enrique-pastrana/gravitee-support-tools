@@ -10,9 +10,13 @@ at, not a report. This command is **read-only**: never modify any file.
 
 1. **Resolve the ticket** — follow
    `${CLAUDE_PLUGIN_ROOT}/references/resolve-ticket.md`: `$ARGUMENTS` > current
-   ticket > cwd > ask; state which ticket and how. Read-only, so skip the write
-   guards. Below, `<ticket>` means the **full folder path** — resolve it from the
-   number with `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/ticket_paths.py" <number>`.
+   ticket > cwd > ask. Read-only, so skip the write guards. Below, `<ticket>`
+   means the **full folder path** — resolve it from the number with
+   `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/ticket_paths.py" <number>`.
+   Print the resolution as its own line **before** the summary —
+   `Ticket: <id> (current)` / `(from arguments)` / `(from cwd)`. Don't fold it
+   into the `TICKET-<id>` header; this standalone line is what lets the user
+   catch a wrong ticket at a glance.
 2. **Read** `<ticket>/metadata.json` in full. For `timeline.md`, do **not**
    read it end-to-end — it can be 30k+ tokens. Read only what you need:
    - The `## 📋 Executive summary` section (state of play).
@@ -21,9 +25,12 @@ at, not a report. This command is **read-only**: never modify any file.
      line, then `Read` with `offset` from there.
    Only fall back to reading more of the timeline if the summary is missing
    or clearly stale.
-3. **Print** a short summary (in chat, not into a file):
+3. **Print** the resolution line (step 1) then a short summary (in chat, not
+   into a file):
 
    ```
+   Ticket: <id> (current|from arguments|from cwd)
+
    TICKET-<id> — <subject>
    Customer: <customer>   Status: <status label>
    Product: <product> <version>   Priority: <priority>
