@@ -170,7 +170,9 @@ license override `${CLAUDE_PLUGIN_ROOT}/templates/docker-compose-gamma.license.y
        tracked instances, ask **which to retire** (or "all stopped / resolved-
        ticket ones"), then `*_down` each. `volumes=true` per instance only when
        the user confirms the data loss.
-   - **gamma:**
+   - **gamma:** (teardown uses the **base file only / just `-p`** — never the license
+     override; its unset `${GAMMA_LICENSE_FILE}` on `down` errors with `empty section
+     between colons`.)
      - `down` → `docker compose -p gravitee-gamma down` (stops + removes containers,
        **keeps** the `mongo-data` / `es-data` volumes so APIs/users survive).
      - Data wipe (factory reset) → `docker compose -p gravitee-gamma down -v` **only

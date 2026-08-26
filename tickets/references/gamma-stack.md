@@ -124,6 +124,13 @@ docker compose -p gravitee-gamma down -v           # ⚠️ also wipe mongo/ES d
 `-v` is a data-wiping reset and only on explicit confirmation. There's only ever one Gamma
 stack, so `clean` has nothing per-instance to prune — treat it as `down`.
 
+⚠️ **`down` / `ps` use the base file only (or just `-p`) — never the license override.**
+The override interpolates `${GAMMA_LICENSE_FILE}`; on teardown that variable isn't set, so
+adding `-f docker-compose-gamma.license.yml` fails with
+`invalid spec: :/opt/…/license.key:ro: empty section between colons`. The project name
+(`-p gravitee-gamma`) alone identifies every container/volume — the override is an
+**up-only** concern.
+
 ## Access URLs (canonical, fixed)
 
 | Role | URL | Login |
