@@ -117,13 +117,13 @@ it to a ticket only as a logging courtesy. But it **is version-selectable**:
 `/stack up gamma@4.13` (default `4.12`; Gamma needs 4.12+, since the module
 plugins ship inside those images).
 
-| Role | URL | Login |
-|---|---|---|
-| Gamma console | http://localhost:8086 | admin / admin |
-| APIM console | http://localhost:8084 | admin / admin |
-| Developer portal | http://localhost:8085 | admin / admin |
-| Management API | http://localhost:8083/management | — |
-| Gateway | http://localhost:8082 | — |
+| Role | URL |
+|---|---|
+| Gamma console | http://localhost:8086 (admin/admin) |
+| APIM console | http://localhost:8084 (admin/admin) |
+| Developer portal | http://localhost:8085 (admin/admin) |
+| Management API | http://localhost:8083/management |
+| Gateway | http://localhost:8082 |
 
 The **Gamma modules** (Agent Management, AuthZ, AIM, Edge, ESM, …) are baked into
 the public 4.12+ images but **license-gated**: with a full-pack Enterprise license

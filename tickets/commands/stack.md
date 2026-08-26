@@ -121,20 +121,30 @@ license override `${CLAUDE_PLUGIN_ROOT}/templates/docker-compose-gamma.license.y
      A non-zero count with a license usually means the mounted file is base64 text,
      not raw binary — point at the `base64 -d` fix in the reference.
 
-   **Always print an Access URLs table**, from what the tools/compose actually
-   expose — never fabricate a port or host.
-   - **APIM** returns a role→host-port map; render Console (admin/admin) / Portal /
-     Management API (`/management`) / Gateway, plus any feature URL (e.g. Prometheus).
-   - **AM** already returns full URL strings — present them as-is.
+   **Always print an Access URLs table** — the same **two-column `Role | URL`** shape
+   for every product (credentials inline in the URL cell) — from what the tools/compose
+   actually expose; never fabricate a port or host.
+   - **APIM** — from the returned role→host-port map:
+
+     | Role | URL |
+     |---|---|
+     | Console | http://localhost:\<console> (admin/admin) |
+     | Portal | http://localhost:\<portal> |
+     | Management API | http://localhost:\<mgmt>/management |
+     | Gateway | http://localhost:\<gateway> |
+
+     plus any feature URL the tool lists (e.g. Prometheus `http://localhost:<prometheus>`).
+   - **AM** already returns full URL strings (console `…/am/ui/ (admin/adminadmin)`,
+     management `…/am/management/`, gateway `…/am/`) — present them as-is in the table.
    - **gamma** — the fixed canonical ports:
 
-     | Role | URL | Login |
-     |---|---|---|
-     | Gamma console | http://localhost:8086 | admin / admin |
-     | APIM console | http://localhost:8084 | admin / admin |
-     | Developer portal | http://localhost:8085 | admin / admin |
-     | Management API | http://localhost:8083/management | — |
-     | Gateway | http://localhost:8082 | — |
+     | Role | URL |
+     |---|---|
+     | Gamma console | http://localhost:8086 (admin/admin) |
+     | APIM console | http://localhost:8084 (admin/admin) |
+     | Developer portal | http://localhost:8085 (admin/admin) |
+     | Management API | http://localhost:8083/management |
+     | Gateway | http://localhost:8082 |
 
    Also report **which license source was used** (gamma: EE vs OSS). If an EE-only
    capability was expected but it resolved to OSS, warn and point at

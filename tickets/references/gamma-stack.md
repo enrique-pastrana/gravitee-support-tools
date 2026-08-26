@@ -133,12 +133,12 @@ adding `-f docker-compose-gamma.license.yml` fails with
 
 ## Access URLs (canonical, fixed)
 
-| Role | URL | Login |
-|---|---|---|
-| Gamma console | http://localhost:8086 | admin / admin |
-| APIM console | http://localhost:8084 | admin / admin |
-| Developer portal | http://localhost:8085 | admin / admin |
-| Management API | http://localhost:8083/management | — |
-| Gateway | http://localhost:8082 | — |
+| Role | URL |
+|---|---|
+| Gamma console | http://localhost:8086 (admin/admin) |
+| APIM console | http://localhost:8084 (admin/admin) |
+| Developer portal | http://localhost:8085 (admin/admin) |
+| Management API | http://localhost:8083/management |
+| Gateway | http://localhost:8082 |
 
 Read health/URLs from `docker compose -p gravitee-gamma ps` — don't fabricate ports.
