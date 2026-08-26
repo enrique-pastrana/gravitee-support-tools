@@ -129,21 +129,21 @@ switched) to the same entry's `<details>` rather than adding new ones.
 </details>
 ```
 
-For the **Gamma** demo stack (shared singleton — no instance, canonical
-host-routed URLs). Optional: only log it when the ticket is already in context.
+For the **Gamma** stack (singleton — no instance, canonical `localhost` ports,
+version-selectable). Optional: only log it when the ticket is already in context.
 
 ```markdown
 ### [NNN] YYYY-MM-DD HH:MM - 🛠️ Local stack (Gamma)
 
-**Up:** shared Gamma demo stack (canonical ports, nginx `:80` host-routing) — <license mode>.
+**Up:** Gamma singleton `gamma@<version>` (official compose, canonical ports 8082–8086) — <EE / OSS>.
 
-**URLs:** gamma http://gamma.localhost · APIM console http://apim.localhost · portal http://portal.localhost · AM http://am.localhost
+**URLs:** gamma http://localhost:8086 · APIM console http://localhost:8084 · portal http://localhost:8085 · mgmt API http://localhost:8083/management · gateway http://localhost:8082
 
 <details>
 <summary>🛠️ <b>Stack lifecycle</b></summary>
 
-- YYYY-MM-DD HH:MM — up + setup (Gamma demo stack)
-- YYYY-MM-DD HH:MM — torn down
+- YYYY-MM-DD HH:MM — up (Gamma `<version>`, <EE / OSS>)
+- YYYY-MM-DD HH:MM — torn down (volumes kept / wiped)
 
 </details>
 ```

@@ -1,0 +1,21 @@
+# Gamma license override — mounts an Enterprise license into the Gamma stack.
+#
+# Applied ON TOP of docker-compose-gamma.yml only when `/stack` has resolved a
+# license file, so the base stays OSS and carries no host path:
+#   docker compose -f docker-compose-gamma.yml -f docker-compose-gamma.license.yml \
+#     -p gravitee-gamma up -d
+#
+# GAMMA_LICENSE_FILE is set by the command to the resolved host path (an explicit
+# license= arg, else $APIM_LICENSE, else ~/.gravitee/license.key). It is REQUIRED
+# when this override is used — never a default here, so a missing file is a loud
+# command-side decision (run OSS = don't add this override), not a silent empty mount.
+#
+# IMPORTANT: the file must be the RAW BINARY license, not the base64 text the
+# Slack bot hands you — the node rejects base64 as "malformed". Convert once:
+#   base64 -d -i license.base64.txt -o ~/.gravitee/license.key
+# See references/gamma-stack.md.
+
+services:
+  management_api:
+    volumes:
+      - ${GAMMA_LICENSE_FILE}:/opt/graviteeio-management-api/license/license.key:ro
