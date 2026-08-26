@@ -58,10 +58,35 @@ pipx install "git+https://github.com/zach-sirotkin/gravitee-stacker@v0.7.2"  # >
 export GRAVITEE_STACKER_BIN="$HOME/.local/bin/gravitee-stacker"
 ```
 
-Drop an EE license at `~/.gravitee/license.key` (or set `APIM_LICENSE`) to use
-EE-only features (native-Kafka, alert-engine, Debug mode); otherwise stacks run
-in OSS mode. If the tools are missing, `/stack` runs `scripts/stack-preflight`
-to tell you what's wrong.
+If the tools are missing, `/stack` runs `scripts/stack-preflight` to tell you
+what's wrong.
+
+#### Licensing (OSS vs EE)
+
+**A license is optional.** gravitee-stacker resolves one through a cascade and
+takes the first that exists and is non-empty; if none does, the stack simply
+comes up in **OSS mode** — no error, nothing aborts. The order is:
+
+1. an explicit `license=<path>` argument (only if you point `/stack` at a file),
+2. the **`APIM_LICENSE`** environment variable,
+3. the default path **`~/.gravitee/license.key`**,
+4. otherwise → **OSS mode**.
+
+The easiest setup is to drop your EE license once at `~/.gravitee/license.key`
+and forget about it — stacker mounts it read-only into the gateway and
+management-api automatically whenever it's present. `/stack` reports which
+source was used (e.g. `license: default path` or `license: none (OSS mode)`).
+
+You only need a license when the case requires an **enterprise-only** capability:
+
+- the **`kafka`** variant (native-Kafka gateway) **requires** a license — it
+  won't come up without one;
+- other EE features (alert-engine, Debug mode, …) would otherwise start
+  **crippled in OSS**, so `/stack` **warns** when you ask for one but it resolved
+  to OSS, pointing you at `~/.gravitee/license.key` / `APIM_LICENSE` instead of
+  silently giving you a degraded stack.
+
+For plain APIM / AM reproductions you don't need a license at all.
 
 ### Zendesk credentials (inside the `ia-tooling` `.env`)
 
