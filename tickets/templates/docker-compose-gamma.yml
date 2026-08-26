@@ -1,0 +1,128 @@
+# Gravitee Gamma — local singleton stack (OFFICIAL public-image path).
+#
+# This is the customer-deployment shape from documentation.gravitee.io: a single
+# self-contained compose using PUBLIC Docker Hub images (graviteeio/*), no ACR
+# login, no plugin-building. Gamma is turned on with gravitee_gamma_enabled=true
+# on the gateway + management_api. The Gamma module plugins (authz/aim/edge/esm)
+# are already baked into the public 4.12+ images — a full-pack Enterprise license
+# activates them (see references/gamma-stack.md); without one they load in OSS mode.
+#
+# Driven by `/stack up|list|down gamma[@version]`. NOT gravitee-stacker (that's the
+# apim/am path). The command runs this file with a fixed project name so it stays a
+# singleton on canonical ports:
+#   docker compose -f docker-compose-gamma.yml -p gravitee-gamma up -d
+#
+# Version:  every graviteeio/* image is pinned to ${GAMMA_VERSION:-4.12}. Gamma needs
+#           4.12+. Override per run:  GAMMA_VERSION=4.13 docker compose ... up -d
+# License:  NOT here — kept in the docker-compose-gamma.license.yml override so this
+#           base file stays OSS and needs no host path. The command adds the override
+#           (-f) and sets GAMMA_LICENSE_FILE only when a license is resolved.
+
+networks:
+  gamma:
+
+volumes:
+  mongo-data:
+  es-data:
+
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: gamma_mongodb
+    restart: unless-stopped
+    volumes:
+      - mongo-data:/data/db
+    networks: [gamma]
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.17.2
+    container_name: gamma_elasticsearch
+    restart: unless-stopped
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    volumes:
+      - es-data:/usr/share/elasticsearch/data
+    networks: [gamma]
+
+  gateway:
+    image: graviteeio/apim-gateway:${GAMMA_VERSION:-4.12}
+    container_name: gamma_gateway
+    restart: unless-stopped
+    depends_on: [mongodb, elasticsearch]
+    ports:
+      - "8082:8082"
+    environment:
+      # Turn on Gamma in the Gateway (required for AuthZ policy/PDP sync)
+      - gravitee_gamma_enabled=true
+      - gravitee_management_mongodb_uri=mongodb://mongodb:27017/gravitee?serverSelectionTimeoutMS=5000&connectTimeoutMS=5000&socketTimeoutMS=5000
+      - gravitee_ratelimit_mongodb_uri=mongodb://mongodb:27017/gravitee?serverSelectionTimeoutMS=5000&connectTimeoutMS=5000&socketTimeoutMS=5000
+      - gravitee_reporters_elasticsearch_endpoints_0=http://elasticsearch:9200
+    networks: [gamma]
+
+  management_api:
+    image: graviteeio/apim-management-api:${GAMMA_VERSION:-4.12}
+    container_name: gamma_management_api
+    restart: unless-stopped
+    depends_on: [mongodb, elasticsearch]
+    ports:
+      - "8083:8083"
+    environment:
+      # Turn on Gamma in the Management API
+      - gravitee_gamma_enabled=true
+      # Datastores
+      - gravitee_management_mongodb_uri=mongodb://mongodb:27017/gravitee?serverSelectionTimeoutMS=5000&connectTimeoutMS=5000&socketTimeoutMS=5000
+      - gravitee_analytics_elasticsearch_endpoints_0=http://elasticsearch:9200
+      # Console and portal URLs
+      - gravitee_installation_standalone_console_url=http://localhost:8084
+      - gravitee_installation_standalone_portal_url=http://localhost:8085
+      # CORS - allow the console origins with credentials
+      - gravitee_http_cors_enabled=true
+      - gravitee_http_cors_allow-origin_0=http://localhost:8084
+      - gravitee_http_cors_allow-origin_1=http://localhost:8085
+      - gravitee_http_cors_allow-origin_2=http://localhost:8086
+      - gravitee_http_cors_allow-headers=Authorization,Content-Type,X-Requested-With,Accept,Origin,Access-Control-Request-Method,Access-Control-Request-Headers,Cookie
+      - gravitee_http_cors_allow-methods=GET,POST,PUT,DELETE,OPTIONS
+      - gravitee_http_cors_exposed-headers=X-Total-Count,Set-Cookie
+      - gravitee_http_cors_allow-credentials=true
+      # Cookie - same-site localhost over HTTP
+      - gravitee_http_cookie_sameSite=Lax
+      - gravitee_http_cookie_secure=false
+    networks: [gamma]
+
+  management_ui:
+    image: graviteeio/apim-management-ui:${GAMMA_VERSION:-4.12}
+    container_name: gamma_apim_console
+    restart: unless-stopped
+    depends_on: [management_api]
+    ports:
+      - "8084:8080"
+    environment:
+      - MGMT_API_URL=http://localhost:8083/management/organizations/DEFAULT/environments/DEFAULT/
+    networks: [gamma]
+
+  portal_ui:
+    image: graviteeio/apim-portal-ui:${GAMMA_VERSION:-4.12}
+    container_name: gamma_portal
+    restart: unless-stopped
+    depends_on: [management_api]
+    ports:
+      - "8085:8080"
+    environment:
+      - PORTAL_API_URL=http://localhost:8083/portal/environments/DEFAULT
+    networks: [gamma]
+
+  gamma_console:
+    image: graviteeio/gamma-ui:${GAMMA_VERSION:-4.12}
+    container_name: gamma_console
+    restart: unless-stopped
+    depends_on: [management_api]
+    ports:
+      - "8086:8080"
+    environment:
+      - GAMMA_API_URL=http://localhost:8083/gamma
+      - GAMMA_CONSOLE_BASE_HREF=/
+      - HTTP_PORT=8080
+      - SERVER_NAME=localhost
+    networks: [gamma]

@@ -1,71 +1,100 @@
 #!/usr/bin/env bash
-# stack-preflight — diagnose why the `gravitee-stacker` MCP tools aren't usable.
+# stack-preflight — check preconditions for `/stack`, per product.
 #
-# gravitee-stacker (github.com/zach-sirotkin/gravitee-stacker) is an EXTERNAL MCP
-# server the user installs separately. The plugin's .mcp.json declares it via
-# ${GRAVITEE_STACKER_BIN} with NO fallback, so — like the ia-tooling servers —
-# it only loads when that variable is exported in the environment Claude was
-# launched with. When it's missing, the `/stack` command's tools simply aren't
-# there and the MCP layer can't self-report why. This script says why + how to fix.
+# Usage: stack-preflight [apim|am|gamma]   (no arg = check everything)
 #
-# It does NOT bring any stack up (that's gravitee-stacker's `apim_up`/`am_up`,
-# gated behind /stack's confirmation). It only checks preconditions.
+# Two back-ends:
+#   • apim / am  — driven by the EXTERNAL gravitee-stacker MCP server
+#     (github.com/zach-sirotkin/gravitee-stacker), wired in .mcp.json via
+#     ${GRAVITEE_STACKER_BIN} with NO fallback. Like the ia-tooling servers it
+#     only loads when that variable is exported in the environment Claude was
+#     launched with; when it's missing the apim_*/am_* tools simply aren't there
+#     and the MCP layer can't self-report why. This script says why + how to fix.
+#   • gamma      — driven by the plugin's OWN official docker-compose (public
+#     images), NOT gravitee-stacker. No GRAVITEE_STACKER_BIN, no ACR, no separate
+#     repo. It just needs Docker, optionally a license, and the canonical ports
+#     8082–8086 free.
+#
+# This script never brings a stack up — it only checks preconditions.
 set -euo pipefail
 
 err() { printf "\033[1;31m✗\033[0m %s\n" "$*" >&2; }
 ok()  { printf "\033[1;32m✓\033[0m %s\n" "$*"; }
 warn(){ printf "\033[1;33m!\033[0m %s\n" "$*" >&2; }
 
-# 1) The MCP wiring precondition the MCP layer can't see for itself.
-if [ -z "${GRAVITEE_STACKER_BIN:-}" ]; then
-  err "gravitee-stacker is not wired in: GRAVITEE_STACKER_BIN is not set."
-  err "  The /stack command drives the gravitee-stacker MCP server; without this"
-  err "  variable .mcp.json can't start it, so no apim_*/am_* tools are available."
-  err "  Install it once, then export the path and RELAUNCH Claude (MCP servers"
-  err "  load only at launch — exporting it now is not enough):"
-  err "    pipx install \"git+https://github.com/zach-sirotkin/gravitee-stacker@v0.7.2\""
-  err "    export GRAVITEE_STACKER_BIN=\"\$HOME/.local/bin/gravitee-stacker\""
-  err "    claude --plugin-dir <path-to>/tickets"
-  exit 1
-fi
-if [ ! -x "$GRAVITEE_STACKER_BIN" ]; then
-  err "GRAVITEE_STACKER_BIN=$GRAVITEE_STACKER_BIN is not an executable file."
-  err "  Point it at the installed gravitee-stacker binary (pipx: usually"
-  err "  \$HOME/.local/bin/gravitee-stacker), then relaunch Claude."
-  exit 1
-fi
-ok "gravitee-stacker binary found: $GRAVITEE_STACKER_BIN"
+PRODUCT="${1:-all}"
+case "$PRODUCT" in apim|am|gamma|all) ;; *)
+  err "Unknown product '$PRODUCT' (expected: apim | am | gamma)"; exit 2 ;;
+esac
 
-# 2) Docker daemon — gravitee-stacker runs the stacks in Docker.
+# Docker daemon — every product runs its stack in Docker.
 if ! docker info >/dev/null 2>&1; then
   err "Docker is not responding. Open Docker Desktop and retry."
   exit 1
 fi
 ok "Docker is up"
 
-# 3) License (optional). EE features (native-Kafka, alert-engine, Debug mode)
-# need a license; without one APIM comes up in OSS mode. Resolution order used by
-# gravitee-stacker: apim_up's license arg → $APIM_LICENSE → ~/.gravitee/license.key.
+# License (optional, shared resolution). EE features (native-Kafka, alert-engine,
+# Debug mode; for gamma the Gamma modules — authz/aim/edge/esm/agent-mgmt) need a
+# license; without one the stack comes up in OSS mode. Resolution order used by
+# both back-ends: explicit license arg → $APIM_LICENSE → ~/.gravitee/license.key.
 if [ -n "${APIM_LICENSE:-}" ] && [ -f "${APIM_LICENSE}" ]; then
   ok "License: APIM_LICENSE ($APIM_LICENSE)"
 elif [ -f "$HOME/.gravitee/license.key" ]; then
   ok "License: ~/.gravitee/license.key"
 else
   warn "No EE license found (APIM_LICENSE unset and ~/.gravitee/license.key absent)."
-  warn "  APIM will run in OSS mode; native-Kafka / alert-engine / Debug need a"
-  warn "  license. Drop it at ~/.gravitee/license.key or export APIM_LICENSE to use them."
+  warn "  The stack will run in OSS mode. For gamma the Gamma modules stay dormant;"
+  warn "  for apim, native-Kafka / alert-engine / Debug need a license. Drop it at"
+  warn "  ~/.gravitee/license.key or export APIM_LICENSE. See references/gamma-stack.md"
+  warn "  for the gamma license recipe (and the base64→raw-binary gotcha)."
 fi
 
-# 4) Gamma demo stack (optional). Only needed for `/stack up gamma` — the Gamma
-# stack is a separate repo (GAMMA_STACK_DIR) that also needs an ACR login and a
-# license inside it. apim/am don't use any of this. The `doctor` tool reports the
-# authoritative readiness at runtime; this is just an early heads-up.
-if [ -n "${GAMMA_STACK_DIR:-}" ] && [ -d "${GAMMA_STACK_DIR}/docker" ]; then
-  ok "Gamma stack repo found: $GAMMA_STACK_DIR (for /stack up gamma)"
-else
-  warn "Gamma stack not configured (GAMMA_STACK_DIR unset or missing docker/)."
-  warn "  Only needed for '/stack up gamma'; apim/am work without it. It also needs"
-  warn "  an ACR login and a license in the repo — run 'doctor' to see what's missing."
+# gravitee-stacker wiring — ONLY for apim/am (gamma doesn't use it).
+if [ "$PRODUCT" = "apim" ] || [ "$PRODUCT" = "am" ] || [ "$PRODUCT" = "all" ]; then
+  if [ -z "${GRAVITEE_STACKER_BIN:-}" ]; then
+    err "gravitee-stacker is not wired in: GRAVITEE_STACKER_BIN is not set."
+    err "  apim/am drive the gravitee-stacker MCP server; without this variable"
+    err "  .mcp.json can't start it, so no apim_*/am_* tools are available. Install"
+    err "  it once, then export the path and RELAUNCH Claude (MCP servers load only"
+    err "  at launch — exporting it now is not enough):"
+    err "    pipx install \"git+https://github.com/zach-sirotkin/gravitee-stacker@v0.7.2\""
+    err "    export GRAVITEE_STACKER_BIN=\"\$HOME/.local/bin/gravitee-stacker\""
+    err "    claude --plugin-dir <path-to>/tickets"
+    [ "$PRODUCT" = "all" ] && warn "  (gamma doesn't need this — /stack up gamma works without it.)" || exit 1
+  elif [ ! -x "$GRAVITEE_STACKER_BIN" ]; then
+    err "GRAVITEE_STACKER_BIN=$GRAVITEE_STACKER_BIN is not an executable file."
+    err "  Point it at the installed gravitee-stacker binary (pipx: usually"
+    err "  \$HOME/.local/bin/gravitee-stacker), then relaunch Claude."
+    [ "$PRODUCT" = "all" ] || exit 1
+  else
+    ok "gravitee-stacker binary found: $GRAVITEE_STACKER_BIN"
+  fi
 fi
 
-ok "Ready — the gravitee-stacker tools should be available as plugin:tickets:*."
+# Gamma canonical ports — ONLY for gamma. The singleton binds 8082–8086; if
+# something already holds one, /stack must stop rather than fight for it.
+if [ "$PRODUCT" = "gamma" ] || [ "$PRODUCT" = "all" ]; then
+  busy=""
+  for p in 8082 8083 8084 8085 8086; do
+    if lsof -nP -iTCP:"$p" -sTCP:LISTEN >/dev/null 2>&1; then busy="$busy $p"; fi
+  done
+  if [ -n "$busy" ]; then
+    # If our own Gamma singleton holds them, that's fine — it's already up.
+    if docker ps --filter "name=gamma_management_api" --format '{{.Names}}' 2>/dev/null | grep -q .; then
+      ok "Gamma ports 8082–8086 held by the running Gamma singleton (gamma_* containers)."
+    else
+      warn "Gamma canonical ports in use by something else:$busy"
+      warn "  /stack up gamma needs 8082–8086 free. Stop whatever holds them (or the"
+      warn "  old Gamma stack) before bringing Gamma up — it can't remap ports."
+    fi
+  else
+    ok "Gamma canonical ports 8082–8086 are free"
+  fi
+fi
+
+case "$PRODUCT" in
+  gamma) ok "Ready — /stack up gamma orchestrates the official compose directly." ;;
+  apim|am) ok "Ready — the gravitee-stacker tools should be available as plugin:tickets:*." ;;
+  all) ok "Preflight complete." ;;
+esac
