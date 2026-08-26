@@ -50,10 +50,23 @@ images and consume RAM, and teardown with volumes wipes data.
 4. **Bring up.** `apim_up` / `am_up` with the resolved args (pass `license=` only
    if the user points at a specific file — otherwise let gravitee-stacker resolve
    `APIM_LICENSE` → `~/.gravitee/license.key` → OSS). Then block on
-   `apim_wait` / `am_wait` until healthy. Report the URLs and **which license
-   source was used**. If an **EE-only** capability was requested (`kafka`,
-   `alert-engine`, Debug mode) but it resolved to **OSS**, warn and point at
-   `~/.gravitee/license.key` / `APIM_LICENSE`.
+   `apim_wait` / `am_wait` until healthy.
+   **Always print an Access URLs table**, built from the `urls`/`ports` the tool
+   returns — never fabricate a port. **APIM** returns a role→host-port map; render:
+
+   | Role | URL |
+   |---|---|
+   | Console | `http://localhost:<console>` (admin/admin) |
+   | Portal | `http://localhost:<portal>` |
+   | Management API | `http://localhost:<mgmt>/management` |
+   | Gateway | `http://localhost:<gateway>` |
+
+   plus any feature URL the tool lists (e.g. Prometheus `http://localhost:<prometheus>`).
+   **AM** already returns full URL strings (console `…/am/ui/ (admin/adminadmin)`,
+   management `…/am/management/`, gateway `…/am/`) — present them as-is.
+   Also report **which license source was used**. If an **EE-only** capability
+   was requested (`kafka`, `alert-engine`, Debug mode) but it resolved to **OSS**,
+   warn and point at `~/.gravitee/license.key` / `APIM_LICENSE`.
 
 5. **Log to the timeline (ticket-scoped only).** Record the stack via the
    `Local stack` block of `${CLAUDE_PLUGIN_ROOT}/templates/entry-snippets.md`
