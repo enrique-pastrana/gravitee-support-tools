@@ -129,7 +129,7 @@ A typical case, start to finish:
 | `/log-updates [number]` | Pulls new Zendesk activity (customer messages, replies, internal notes) into the timeline as summarised entries, with attachments. | Whenever there's new activity on the ticket. |
 | `/investigate <question> [number]` | Answers a question grounded in the case (past tickets, Jira, docs), iterates in chat, logs the Q&A as a 🔍 entry. | While digging into the cause of the problem. |
 | `/reproduce [number]` | Scaffolds a `reproduction/` folder and logs a 🧪 milestone (reproduced / not reproduced). | When you try to reproduce the reported bug. |
-| `/stack <up\|list\|down\|clean> [apim\|am][@version] [number]` | Spins up / lists / tears down a local Gravitee stack via `gravitee-stacker`, scoped to the ticket and logged as a 🛠️ entry. | When you need a live environment to reproduce or test against. |
+| `/stack <up\|list\|down\|clean\|setup> [apim\|am\|gamma][@version] [number]` | Spins up / lists / tears down a local Gravitee stack via `gravitee-stacker` — standalone APIM/AM (per-ticket) or the shared Gamma demo stack — scoped to the ticket and logged as a 🛠️ entry. | When you need a live environment to reproduce or test against. |
 | `/reply [number]` | Drafts an outbound reply, iterates with you in chat, and logs it only on your confirmation. | When it's time to answer the customer. |
 | `/status [number]` | Prints a concise summary — state, entry count, attachments, last entry. Read-only. | To catch up on a ticket at a glance. |
 | `/close [number]` | Mirrors the ticket's terminal state from Zendesk, stamps the resolution, logs a ✅ entry. | Once the customer confirms the case is done. |

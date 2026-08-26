@@ -56,4 +56,16 @@ else
   warn "  license. Drop it at ~/.gravitee/license.key or export APIM_LICENSE to use them."
 fi
 
+# 4) Gamma demo stack (optional). Only needed for `/stack up gamma` — the Gamma
+# stack is a separate repo (GAMMA_STACK_DIR) that also needs an ACR login and a
+# license inside it. apim/am don't use any of this. The `doctor` tool reports the
+# authoritative readiness at runtime; this is just an early heads-up.
+if [ -n "${GAMMA_STACK_DIR:-}" ] && [ -d "${GAMMA_STACK_DIR}/docker" ]; then
+  ok "Gamma stack repo found: $GAMMA_STACK_DIR (for /stack up gamma)"
+else
+  warn "Gamma stack not configured (GAMMA_STACK_DIR unset or missing docker/)."
+  warn "  Only needed for '/stack up gamma'; apim/am work without it. It also needs"
+  warn "  an ACR login and a license in the repo — run 'doctor' to see what's missing."
+fi
+
 ok "Ready — the gravitee-stacker tools should be available as plugin:tickets:*."
