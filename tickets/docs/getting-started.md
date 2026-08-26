@@ -5,9 +5,10 @@ what it does and how to use it day to day, start here. (For setup internals and
 the porting status, see the [README](../README.md) and
 [PORTING.md](../PORTING.md).)
 
-> **Work in progress.** A first set of commands is ready (`tickets-up`,
-> `new-ticket`, `log-updates`, `reply`, `status`); more are on the way. This
-> guide covers what works today.
+> **Work in progress.** The whole day-to-day lifecycle is ready — `tickets-up`,
+> `new-ticket`, `log-updates`, `investigate`, `reproduce`, `reply`, `status`,
+> `stack` and `close`; a few specialist commands (KB articles, indexing) are
+> still on the way. This guide covers what works today.
 
 ## What is this?
 
@@ -17,9 +18,9 @@ tells the whole story in order. Instead of your context being scattered across
 Zendesk comments, Slack, local notes and log files, everything lands in one
 place, and Claude Code helps you fill it in.
 
-You drive it with slash commands (`/new-ticket`, `/log-updates`, `/reply`, …).
-Each command does one job: pull the ticket in, log what the customer said, draft
-a reply, print a status.
+You drive it with slash commands (`/new-ticket`, `/log-updates`, `/investigate`,
+`/reply`, …). Each command does one job: pull the ticket in, log what the
+customer said, record an investigation step, draft a reply, print a status.
 
 ## The mental model (read this once)
 
@@ -100,7 +101,14 @@ A typical case, start to finish:
    Creates the folder, pulls subject/customer/priority + the opening message and
    attachments from Zendesk, logs it as entry `[001]`, and shows you any similar
    past tickets.
-3. **Work the case.** Read the attachments, investigate, reproduce.
+3. **Work the case.** Read the attachments and dig in:
+   - `/investigate <question>` records an analysis step — it answers your
+     question grounded in the case (searching past tickets, Jira, the docs),
+     iterates with you in chat, and logs the Q&A as a collapsible 🔍 entry once
+     you confirm.
+   - `/reproduce` scaffolds a `reproduction/` folder (steps, environment,
+     configs, results) and logs a 🧪 milestone as you confirm or rule out the bug.
+   - `/stack up` spins up a local Gravitee stack to test against (see below).
 4. **The customer (or a colleague) replies:** `/log-updates`
    Pulls everything new on the Zendesk thread since you last checked and logs it
    as summarised entries.
@@ -108,6 +116,9 @@ A typical case, start to finish:
    Drafts a reply grounded in the case, shows it to you in chat, and lets you
    iterate. It only writes the reply into the timeline once you say to save it.
 6. **Glance at where things stand any time:** `/status`
+7. **Wrap it up:** `/close`
+   Once the customer confirms, mirrors the ticket's terminal state from Zendesk
+   (solved → resolved, closed → closed), stamps the resolution and logs a ✅ entry.
 
 ## The commands you have today
 
@@ -116,11 +127,24 @@ A typical case, start to finish:
 | `/tickets-up` | Starts and verifies the `ia-tooling` stack. | First thing each session, or whenever a command says the stack is down. |
 | `/new-ticket <number>` | Creates the ticket folder, fills it from Zendesk, logs the opening message, finds similar tickets. | When you pick up a new ticket. |
 | `/log-updates [number]` | Pulls new Zendesk activity (customer messages, replies, internal notes) into the timeline as summarised entries, with attachments. | Whenever there's new activity on the ticket. |
+| `/investigate <question> [number]` | Answers a question grounded in the case (past tickets, Jira, docs), iterates in chat, logs the Q&A as a 🔍 entry. | While digging into the cause of the problem. |
+| `/reproduce [number]` | Scaffolds a `reproduction/` folder and logs a 🧪 milestone (reproduced / not reproduced). | When you try to reproduce the reported bug. |
+| `/stack <up\|list\|down\|clean> [apim\|am][@version] [number]` | Spins up / lists / tears down a local Gravitee stack via `gravitee-stacker`, scoped to the ticket and logged as a 🛠️ entry. | When you need a live environment to reproduce or test against. |
 | `/reply [number]` | Drafts an outbound reply, iterates with you in chat, and logs it only on your confirmation. | When it's time to answer the customer. |
 | `/status [number]` | Prints a concise summary — state, entry count, attachments, last entry. Read-only. | To catch up on a ticket at a glance. |
+| `/close [number]` | Mirrors the ticket's terminal state from Zendesk, stamps the resolution, logs a ✅ entry. | Once the customer confirms the case is done. |
 
-`[number]` is optional when you're already working inside a ticket's folder —
-the command infers it. Give the number explicitly from anywhere else.
+`[number]` is optional — the command resolves the ticket from what you're working
+on: an explicit number wins, otherwise it uses the **current ticket** (the one a
+command last set), then the ticket folder you're `cd`'d into, and only asks if it
+still can't tell. Give the number explicitly to act on a different ticket as a
+one-off. (For `/investigate`, the free text is your **question**, not the number —
+pass the number after it if you need to.)
+
+`/stack` is optional and needs the external
+[`gravitee-stacker`](https://github.com/zach-sirotkin/gravitee-stacker) tool plus
+Docker — see [Local Gravitee stacks in the README](../README.md#local-gravitee-stacks-stack-optional).
+Without it every other command works fine.
 
 ## When the stack is down
 
