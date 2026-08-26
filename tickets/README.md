@@ -34,6 +34,8 @@ at their own `ia-tooling` checkout.
 | `IA_TOOLING_ROOT` | **Yes** | `~/ia-tooling` | Locates your local `ia-tooling` checkout — used by `.mcp.json` to start the MCP servers and by the scripts to reach the stack. | `${IA_TOOLING_ROOT}` can't expand, so the Zendesk / search / GitHub / Atlassian MCP servers fail to start. Live Zendesk fetch and cross-ticket search stop working (commands fall back to their manual paste flow). |
 | `TICKETS_ROOT` | No | `~/TICKETS` | Where ticket folders are stored — **your** workspace, outside the plugin. | Falls back to `~/TICKETS`. |
 | `IA_TOOLING_ENV` | No | `$IA_TOOLING_ROOT/.env` | Path to the `ia-tooling` `.env` file that holds your Zendesk credentials (read by `fetch_attachments.py` to download attachments). | Falls back to `$IA_TOOLING_ROOT/.env`. If that file is missing, attachment downloads fail with a "missing ZENDESK_* in env" error. |
+| `GRAVITEE_STACKER_BIN` | Only for `/stack` | — | Absolute path to the [`gravitee-stacker`](https://github.com/zach-sirotkin/gravitee-stacker) MCP binary — an **external** tool the `/stack` command drives to spin up local Gravitee stacks. `.mcp.json` uses it to start the server. | `${GRAVITEE_STACKER_BIN}` can't expand, so the gravitee-stacker MCP server fails to start and `/stack` has no tools. Every other command is unaffected. `/stack` runs `scripts/stack-preflight` to diagnose it. |
+| `APIM_LICENSE` | No | `~/.gravitee/license.key` | Path to your Gravitee EE license, read by gravitee-stacker. Needed for EE-only stack features (native-Kafka, alert-engine, Debug mode); without it stacks come up in OSS mode. | Falls back to `~/.gravitee/license.key`, then OSS mode. |
 | `CLAUDE_PLUGIN_ROOT` | Automatic | — | Locates the plugin's own bundled `scripts/` and `templates/`. **Set by Claude Code — you never touch this.** | n/a — managed by Claude Code. |
 
 ```bash
@@ -41,7 +43,25 @@ at their own `ia-tooling` checkout.
 export IA_TOOLING_ROOT="$HOME/ia-tooling"   # required — point at your ia-tooling
 export TICKETS_ROOT="$HOME/TICKETS"         # optional — this is the default
 # export IA_TOOLING_ENV="$HOME/ia-tooling/.env"   # optional — only if your .env lives elsewhere
+# export GRAVITEE_STACKER_BIN="$HOME/.local/bin/gravitee-stacker"  # only for /stack
 ```
+
+### Local Gravitee stacks (`/stack`, optional)
+
+`/stack` spins up local APIM / AM stacks by driving the external
+[`gravitee-stacker`](https://github.com/zach-sirotkin/gravitee-stacker) MCP
+server (needs Docker). Install it once and point `GRAVITEE_STACKER_BIN` at the
+binary, then relaunch Claude (MCP servers load only at launch):
+
+```bash
+pipx install "git+https://github.com/zach-sirotkin/gravitee-stacker@v0.7.2"  # >= v0.7.2
+export GRAVITEE_STACKER_BIN="$HOME/.local/bin/gravitee-stacker"
+```
+
+Drop an EE license at `~/.gravitee/license.key` (or set `APIM_LICENSE`) to use
+EE-only features (native-Kafka, alert-engine, Debug mode); otherwise stacks run
+in OSS mode. If the tools are missing, `/stack` runs `scripts/stack-preflight`
+to tell you what's wrong.
 
 ### Zendesk credentials (inside the `ia-tooling` `.env`)
 

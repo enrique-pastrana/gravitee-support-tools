@@ -30,6 +30,10 @@
     "kapa": {
       "command": "${IA_TOOLING_ROOT}/bin/local-tooling",
       "args": ["mcp", "kapa"]
+    },
+    "gravitee-stacker": {
+      "command": "${GRAVITEE_STACKER_BIN}",
+      "args": []
     }
   }
 }

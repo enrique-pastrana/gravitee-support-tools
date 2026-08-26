@@ -107,6 +107,28 @@ ids, inside a fenced code block. Omit this block entirely if there are none.)
 - Evidence: [reproduction/results/NNN_xxx.png](reproduction/results/NNN_xxx.png)
 ```
 
+## Local stack
+
+For a Gravitee stack spun up locally via `/stack` (gravitee-stacker). One entry
+per ticket's stack activity — append lifecycle changes (torn down, version
+switched) to the same entry's `<details>` rather than adding new ones.
+
+```markdown
+### [NNN] YYYY-MM-DD HH:MM - 🛠️ Local stack
+
+**Up:** APIM <version> (instance `<ticket>`, variant/features if any) — <license mode: OSS / EE>.
+
+**URLs:** console http://localhost:8084 (admin/admin) · gateway :8082 · mgmt-api :8083
+
+<details>
+<summary>🛠️ <b>Stack lifecycle</b></summary>
+
+- YYYY-MM-DD HH:MM — up (APIM <version>, instance `<ticket>`)
+- YYYY-MM-DD HH:MM — torn down (volumes kept / wiped)
+
+</details>
+```
+
 ## Resolution
 
 ```markdown
