@@ -26,7 +26,10 @@ python3 "${CLAUDE_PLUGIN_ROOT}/scripts/current_ticket.py" clear        # forget 
 3. **cwd** — if the shell sits in a ticket folder
    (`$TICKETS_ROOT/<thousand>/<number>/`, e.g. `16000/16575/`, or flat
    `$TICKETS_ROOT/<number>/` for alphanumeric ids), use that number.
-4. **Ask** the user.
+4. **Ask** the user — no shortcuts. If nothing above matched, ask for the number;
+   do **not** infer it from a "sole candidate" because the workspace happens to
+   hold only one ticket. That heuristic silently breaks the moment a second ticket
+   exists, and it's exactly the kind of wrong-ticket guess this chain prevents.
 
 Resolve the bare number to its folder (handles the thousand-bucket layout):
 

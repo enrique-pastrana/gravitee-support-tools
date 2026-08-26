@@ -41,6 +41,16 @@ must not take it away.
 2. **Report** the result:
    - Ends with `✓ Ready to work on tickets.` → stack is up; mention the
      `backend` and `documents` count from the vectordb health line.
+   - `✗ ia-tooling is not loaded: IA_TOOLING_ROOT is not set` → the Docker stack
+     may be fine, but the MCP servers (`zendesk`, `atlassian`/Jira, `github`)
+     can't load because the plugin's `.mcp.json` needs that variable exported at
+     launch. This is why `/mcp` shows those servers `✘ failed` while `vectordb`
+     (which doesn't use the variable) connects. Relay the script's fix verbatim:
+     the user must **exit and relaunch** Claude with `IA_TOOLING_ROOT` exported —
+     re-exporting it inside the session won't help, MCP loads only at launch.
+   - `✗ ia-tooling not found at IA_TOOLING_ROOT=…` → the variable is set but
+     points at the wrong place; tell the user to point it at their ia-tooling
+     checkout and relaunch.
    - `✗ Docker is not responding` → **the one thing the script can't fix.**
      Docker Desktop isn't running and the script won't start it. Tell the user
      to open Docker Desktop and rerun `/tickets-up`.

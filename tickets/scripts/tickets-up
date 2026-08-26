@@ -11,12 +11,47 @@
 # the same variable the plugin's .mcp.json uses to locate the stack.
 set -euo pipefail
 
+# Remember whether the caller EXPORTED IA_TOOLING_ROOT before we apply a default.
+# The plugin's .mcp.json references ${IA_TOOLING_ROOT} with NO fallback, so the
+# zendesk / atlassian / github / kapa MCP servers only load when the variable is
+# exported in the environment Claude was launched with. This script defaults it
+# (next line) and would otherwise run fine — masking that exact problem — so
+# capture the raw state first and diagnose it below.
+_IA_TOOLING_ROOT_WAS_SET=1
+[ -z "${IA_TOOLING_ROOT:-}" ] && _IA_TOOLING_ROOT_WAS_SET=0
+
 IA_TOOLING_ROOT="${IA_TOOLING_ROOT:-$HOME/ia-tooling}"
 API_URL="http://localhost:8000"
 
 say() { printf "\033[1;34m▸\033[0m %s\n" "$*"; }
 ok()  { printf "\033[1;32m✓\033[0m %s\n" "$*"; }
 err() { printf "\033[1;31m✗\033[0m %s\n" "$*" >&2; }
+
+# 0) MCP wiring preconditions — the failure the stack checks below can't see.
+# If IA_TOOLING_ROOT wasn't exported, the MCP servers silently fail to load
+# (only vectordb, which doesn't use the variable, connects) even though the
+# Docker stack is perfectly healthy. Catch it explicitly and say how to fix it.
+if [ "$_IA_TOOLING_ROOT_WAS_SET" -eq 0 ]; then
+  err "ia-tooling is not loaded: IA_TOOLING_ROOT is not set in this environment."
+  err "  The zendesk / atlassian (Jira) / github MCP servers can't start without"
+  err "  it — only vectordb, which doesn't use the variable, will connect."
+  err "  MCP servers load only at launch, so exporting it now is not enough:"
+  err "  exit Claude and relaunch with it exported —"
+  err "    export IA_TOOLING_ROOT=\"\$HOME/ia-tooling\""
+  err "    export TICKETS_ROOT=\"\$HOME/TICKETS\"   # or your sandbox data dir"
+  err "    claude --plugin-dir <path-to>/tickets"
+  exit 1
+fi
+if [ ! -x "$IA_TOOLING_ROOT/bin/local-tooling" ]; then
+  err "ia-tooling not found at IA_TOOLING_ROOT=$IA_TOOLING_ROOT"
+  err "  Expected an executable at \$IA_TOOLING_ROOT/bin/local-tooling."
+  err "  Point IA_TOOLING_ROOT at your ia-tooling checkout, then relaunch Claude."
+  exit 1
+fi
+if [ ! -f "$IA_TOOLING_ROOT/.env" ]; then
+  err "Warning: \$IA_TOOLING_ROOT/.env is missing ($IA_TOOLING_ROOT/.env)."
+  err "  The zendesk MCP server reads it (--env-file); it will fail to start."
+fi
 
 # 1) Docker daemon
 if ! docker info >/dev/null 2>&1; then
