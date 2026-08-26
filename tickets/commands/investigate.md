@@ -3,95 +3,78 @@ description: Answer an investigation question about the ticket, then log the Q&A
 argument-hint: <free-form question>
 ---
 
-You are recording an investigation step: answer a question about the ticket,
-iterate in chat, and only then log the Q&A into the timeline.
+Record an investigation step: **answer first, iterate in chat, log only on
+confirmation.** `$ARGUMENTS` is the **question** (not a ticket number); if empty,
+ask what to investigate.
 
-- Ticket data → the user's workspace `$TICKETS_ROOT` (default `~/TICKETS`).
-- Plugin scripts/templates → `${CLAUDE_PLUGIN_ROOT}`; never write plugin files
+**Conventions**
+- Ticket data → workspace `$TICKETS_ROOT` (default `~/TICKETS`).
+- Scripts/templates/references → `${CLAUDE_PLUGIN_ROOT}`; never write plugin files
   into the workspace.
 - Every helper takes the **bare** number and resolves the folder itself.
-- Here `$ARGUMENTS` is the **question**, not a ticket number. If it's empty, ask
-  the user what to investigate.
 
 ## Steps
 
-1. **Resolve the ticket** — follow `${CLAUDE_PLUGIN_ROOT}/references/resolve-ticket.md`,
-   but the chain is **current ticket > cwd > ask** (no `$ARGUMENTS` rung — that's
-   the question). State which ticket you resolved and how. `/investigate` writes,
-   so run the applicable guards (cwd ≠ current; ticket doesn't exist → offer
-   `/new-ticket`; content mismatch). Resolve the folder once:
+1. **Resolve the ticket.** Follow `${CLAUDE_PLUGIN_ROOT}/references/resolve-ticket.md`,
+   chain **current > cwd > ask** (no `$ARGUMENTS` rung — that's the question).
+   State which ticket and how. `/investigate` writes → run the write-guards:
+   cwd ≠ current · ticket doesn't exist → offer `/new-ticket` · content mismatch.
+   Resolve the folder once:
    ```bash
    python3 "${CLAUDE_PLUGIN_ROOT}/scripts/ticket_paths.py" <number>
    ```
 
-2. **Look for precedents first — before reasoning from scratch.** Consult only
-   the sources that actually help this question; don't fire them all
-   mechanically, and **skip the precedent search entirely** for a question about
-   an artifact in the ticket itself ("what does this log say?"). Cite each source
-   you use; if one is down, carry on with the rest.
-   - **rag_search (vectordb, local)** — precedents in indexed tickets/code. Query
-     per `${CLAUDE_PLUGIN_ROOT}/references/search-precedents.md` (literals, one
-     search per literal, how to read the score). Good for recurring symptoms;
-     skip for ticket-specific artifacts.
-   - **Zendesk (live)** — `zendesk_search_tickets` on the symptom / error, to
-     catch a case another engineer handled that isn't mirrored locally. Read-only.
-   - **Jira (live)** — `searchJiraIssuesUsingJql` (e.g. `text ~ "<error>" ORDER BY
-     updated DESC`) for already-reported bugs / escalations (APIM-XXXXX / AM-XXXX).
-   - **Code — only with a concrete error / exception to trace:** vectordb for the
-     indexed AM/APIM repos (per `search-precedents.md`), or GitHub
-     (`search_code`) for freshness or non-indexed repos. Skip for conceptual
-     questions with no error string.
+2. **Search precedents before reasoning from scratch** — selectively, not all
+   mechanically. **Skip the whole search** for a question about an artifact in the
+   ticket ("what does this log say?"). Cite each source used; if one is down,
+   carry on. If **every** live source (rag_search + Zendesk + Jira) fails to
+   connect, the stack/env is likely down — tell the user to run `/tickets-up`
+   (it diagnoses a missing `IA_TOOLING_ROOT`), then continue with what you have.
+   Query mechanics + scoring → `${CLAUDE_PLUGIN_ROOT}/references/search-precedents.md`.
 
-3. **Answer** with the tools you need: `Read` for files in the ticket folder,
-   `Bash` (`grep`/`find`) for local searches, `WebFetch` only if the user points
-   at a URL. Stay grounded in what you can verify — **never invent ticket
-   numbers, versions or commits.**
+   | source | tool | use when | skip when |
+   |---|---|---|---|
+   | rag_search (vectordb, local) | `rag_search` | recurring symptoms, precedents in indexed tickets/code | ticket-specific artifacts |
+   | Zendesk (live, read-only) | `zendesk_search_tickets` | a case another engineer handled, not mirrored locally | — |
+   | Jira (live) | `searchJiraIssuesUsingJql` — `text ~ "<error>" ORDER BY updated DESC` | already-reported bugs / escalations (APIM-XXXXX / AM-XXXX) | — |
+   | Code | vectordb (indexed AM/APIM repos) or `search_code` (freshness / non-indexed) | **only** a concrete error/exception to trace | conceptual Qs, no error string |
 
-4. **Show what you found + your answer in chat, and write NOTHING to the timeline
-   until the user confirms.** Iterate in chat first (his flow). Steps 5–9 —
-   choosing the entry, formatting, the stamp, the summary — run only after a clear
-   "log it".
+3. **Answer** with `Read` (ticket files), `Bash` (`grep`/`find`), `WebFetch`
+   (only if the user points at a URL). Stay grounded — **never invent ticket
+   numbers, versions, or commits.**
 
-5. **Decide where it goes:**
-   - Opens a new investigation line → **new entry `[NNN]`** with emoji 🔍.
-   - Continues the latest entry → **append to that entry's `<details>` block**,
-     preserving the existing Q&A.
-   - In doubt → ask the user.
+4. **GATE — show findings + answer in chat; write NOTHING to the timeline until
+   the user says "log it".** Iterate in chat first (his flow). Steps 5–9 run only
+   after that confirmation.
 
-6. **Format the Q&A** using the `Investigation` block of
-   `${CLAUDE_PLUGIN_ROOT}/templates/entry-snippets.md`:
-   - `#### Qn: <the question>` — paraphrase if long; quote the verbatim text in
-     the body.
-   - **Claude:** the answer — concise, with code/log excerpts when useful.
-   - If you ran a search, cite the exact command.
-   - Leave a **Note:** line for the user's takeaway.
+5. **Place the entry:**
+   - new investigation line → **new entry `[NNN]`** 🔍
+   - continues the latest entry → **append to its `<details>`**, preserving Q&A
+   - in doubt → ask
 
-7. **Stamp `updated_at` — deterministic, atomic; don't hand-edit the JSON.**
-   - **New entry** (step 5): get the number with
-     `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bump_entry.py" <number>` — it prints
-     the consumed `NNN` and refreshes `updated_at`. Append entry `[NNN]`.
-   - **Appended to an existing entry:** no new number, so refresh the mtime only:
-     ```bash
-     python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bump_entry.py" <number> --touch
-     ```
-     `--touch` refreshes `updated_at` without bumping `next_entry`.
-   `/investigate` records internal analysis — it does **not** change `status`, so
-   there's no `set_meta`/`render_header` here.
+6. **Format** via the `Investigation` block of `${CLAUDE_PLUGIN_ROOT}/templates/entry-snippets.md`:
+   - `#### Qn: <question>` — paraphrase if long; quote verbatim text in the body
+   - **Claude:** the answer — concise, with code/log excerpts
+   - cite the exact command if you searched
+   - leave a **Note:** line for the user's takeaway
 
-8. **Refresh the `## 📋 Executive summary`** only if this investigation changes
-   the picture (new hypothesis, ruled-out cause, new pending item). Minor or
-   confirmatory → leave it as-is. It's the single source of truth `/status` and
-   `/reply` read instead of the full timeline, so keep it self-contained and
-   current.
+7. **Stamp `updated_at`** — deterministic, atomic, never hand-edited:
+   - new entry → `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bump_entry.py" <number>`
+     (prints the consumed `NNN`, refreshes `updated_at`) → append entry `[NNN]`
+   - appended to existing entry → `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bump_entry.py" <number> --touch`
+     (refreshes `updated_at`, no bump)
+   - `/investigate` doesn't change `status` → **no `set_meta`/`render_header`.**
 
-9. **Brief response to the user** — the answer plus "Logged in entry [NNN]."
-   Don't repeat the full answer in chat; it's already in the timeline.
+8. **Refresh `## 📋 Executive summary`** only if the picture changed (new
+   hypothesis, ruled-out cause, new pending item). Minor/confirmatory → leave it.
+   It's the single source of truth `/status` and `/reply` read — keep it
+   self-contained and current.
+
+9. **Reply briefly:** the answer + "Logged in entry [NNN]." Don't repeat the full
+   answer — it's already in the timeline.
 
 ## Don'ts
 
-- Don't fabricate similar tickets — if a grep/search finds nothing, say so.
-- Don't dump 200 lines of log into the timeline; quote the relevant 5–20.
-- Don't restate a long question verbatim in the header — paraphrase in `Qn:` and
-  quote the verbatim text in the body.
-- Don't hand-edit `metadata.json` — use `bump_entry.py` (`--touch` when appending
-  to an existing entry).
+- No fabricated similar tickets — grep/search finds nothing → say so.
+- No 200-line log dumps — quote the relevant 5–20.
+- No hand-editing `metadata.json` — use `bump_entry.py` (`--touch` when appending).
