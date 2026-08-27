@@ -103,10 +103,19 @@ to that article/Issue) rather than create a duplicate.
 
 ## One-time repo setup (per user)
 
-Do this once, on the repo `$KB_REPO` points at. `/kb-preflight` verifies the
-parts it can; the Project board is a UI step it can't check.
+Each user points `$KB_REPO` at **their own** KB repo — it holds their KB content,
+so the plugin can't ship it, the same way it ships no ticket data (that's
+`TICKETS_ROOT`) and no ia-tooling checkout (`IA_TOOLING_ROOT`). Do the steps below
+once. `/kb-preflight` verifies the mandatory parts (1–3); the Project board (4) is
+an **optional** UI step it can't check.
+
+### Mandatory — the repo, labels, and `articles/`
+
+Steps 1–3 are all the commands actually need. They're mechanical and idempotent —
+`gh` does them in a few seconds.
 
 1. **Create it private.** One article per file will live under `articles/`.
+   (Private = employee-gated, so internal references are safe inside it.)
 2. **Labels** (a candidate Issue needs `kb:candidate`; a draft PR uses `kb:draft`):
    ```bash
    gh label create "kb:candidate" --repo "$KB_REPO" --color FBCA04 \
@@ -120,11 +129,36 @@ parts it can; the Project board is a UI step it can't check.
      | base64 | xargs -I{} gh api -X PUT "repos/$KB_REPO/contents/articles/.gitkeep" \
        -f message="chore: seed articles/ folder" -f content={}
    ```
-4. **Project board (optional, UI).** Create a GitHub **Project** ("KB pipeline")
-   with a **Status** field (`Candidate`, `In review`, `Published`) and two
-   **built-in workflows** (Project → ⚙ → Workflows — native, no Actions file):
-   - *Item added to project* → set Status = **Candidate**;
-   - *Item closed* → set Status = **Published**.
-   Then Project settings → add `$KB_REPO` so new Issues/PRs auto-add. This needs
-   the `project` / `read:project` gh scope (`gh auth refresh -s project`) or just
-   do it in the web UI. The commands work without the board — it's a view.
+
+### Optional — the Project board (a kanban view)
+
+**The KB commands work fully without this.** The lifecycle state lives in the
+Issues/PRs and their labels, not in a board — so the board is purely a nice
+kanban *view* (Candidate → In review → Published). Skip it if you don't want it;
+set it up if you like seeing the pipeline at a glance.
+
+It's a GitHub **Project v2** with two native **built-in workflows** (no Actions
+file, nothing installed into your repo). All in the web UI — one time, ~5 min:
+
+1. **Create the Project.** github.com/users/`<you>`/projects → **New project** →
+   Table template → name it **`KB pipeline`**.
+2. **Status field** — the default `Status` field ships with `Todo / In Progress /
+   Done`; rename its options to exactly: **`Candidate`**, **`In review`**,
+   **`Published`** (⋯ → Settings → Custom fields → Status).
+3. **Auto-add the repo.** ⋯ → **Workflows** → **Auto-add to project** → pick
+   `$KB_REPO`, set the filter to **`is:open`** (so both Issues *and* draft PRs are
+   pulled in — `is:issue is:open` would miss the PRs), **Save and turn on**.
+4. **Two status automations** (same Workflows list, both native):
+   - **Item added to project** → *Set* `Status` = **`Candidate`** → turn on.
+   - **Item closed** → *Set* `Status` = **`Published`** → turn on.
+     (A merged PR is a closed item, so this covers publish too.)
+
+Reading/managing the board via `gh` (e.g. `gh project item-list`) needs the
+`project` scope: `gh auth refresh -s project` (or `read:project` for read-only).
+The web UI needs no extra scope. **`In review`** isn't set by an automation —
+`/kb` moves the draft PR there when it opens it.
+
+> **Automating it?** Steps 1–3 (repo/labels/`articles/`) are trivial to script and
+> a `/kb-setup` command may fold them in. The board's built-in workflows (step 4)
+> are UI-configured and not worth scripting for an optional view — so it stays a
+> documented manual step.

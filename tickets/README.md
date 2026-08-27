@@ -159,9 +159,13 @@ Writes (Issues, PRs, merges) go through your **own `gh` CLI** — install it onc
 `KB_REPO`. Reads and duplicate-detection use the read-only `github-mcp-server`
 MCP plus semantic `rag_search`. The repo is **private / employee-gated**, so
 internal references are safe inside it. `/kb-candidate` runs
-`scripts/kb-preflight` to check the write path before creating anything. The full
-model, the four article types, and the **one-time repo setup** (labels,
-`articles/` folder, optional Project board) live in
+`scripts/kb-preflight` to check the write path before creating anything.
+
+The **one-time repo setup** is quick: create the repo private, add the two labels
+and an `articles/` folder (a few `gh` commands). A kanban **Project board** is
+**optional** — the commands work off the Issues/PRs and labels, so the board is
+just a view you can add if you want it. The full model, the four article types,
+and the step-by-step setup (including the board) live in
 [`references/kb-workflow.md`](references/kb-workflow.md).
 
 ### Zendesk credentials (inside the `ia-tooling` `.env`)
