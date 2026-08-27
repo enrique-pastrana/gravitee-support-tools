@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+# kb-preflight — check preconditions for the KB commands (/kb-candidate, /kb, /kb-publish).
+#
+# Usage: kb-preflight
+#
+# The KB lifecycle lives in a GitHub repo (issues → PRs → merges), one article
+# per Markdown file. WRITES go through the user's own `gh` CLI (already authed
+# for their account); the github-mcp-server MCP is READ-ONLY by design and is
+# used for dedup lookups, never for creating issues/PRs. This script checks the
+# write path only — that `gh` exists, is authenticated, KB_REPO is set and
+# reachable, and the pipeline labels exist. It never creates or changes anything.
+set -euo pipefail
+
+err() { printf "\033[1;31m✗\033[0m %s\n" "$*" >&2; }
+ok()  { printf "\033[1;32m✓\033[0m %s\n" "$*"; }
+warn(){ printf "\033[1;33m!\033[0m %s\n" "$*" >&2; }
+
+# 1. gh installed.
+if ! command -v gh >/dev/null 2>&1; then
+  err "GitHub CLI (gh) is not installed. KB writes (issues, PRs) go through gh."
+  err "  Install it — macOS: 'brew install gh' — then 'gh auth login'."
+  exit 1
+fi
+ok "gh is installed ($(command -v gh))"
+
+# 2. gh authenticated.
+if ! gh auth status >/dev/null 2>&1; then
+  err "gh is not authenticated. Run 'gh auth login' (needs the 'repo' scope)."
+  exit 1
+fi
+ok "gh is authenticated"
+
+# 3. KB_REPO set.
+if [ -z "${KB_REPO:-}" ]; then
+  err "KB_REPO is not set. Point it at your KB articles repo, e.g."
+  err "  export KB_REPO=\"your-org/kb-articles\"   (in ~/.zshrc or ~/.bashrc)"
+  err "  It's the single config for the KB slice, like IA_TOOLING_ROOT / TICKETS_ROOT."
+  exit 1
+fi
+
+# 4. KB_REPO reachable (also proves the token can see it).
+if ! gh repo view "$KB_REPO" >/dev/null 2>&1; then
+  err "Can't reach KB_REPO='$KB_REPO'. Check the owner/name and that your gh"
+  err "  account has access (the repo may be private)."
+  exit 1
+fi
+ok "KB_REPO reachable: $KB_REPO"
+
+# 5. Pipeline labels present (kb-candidate needs kb:candidate; /kb needs kb:draft).
+missing=""
+for label in "kb:candidate" "kb:draft"; do
+  if ! gh label list --repo "$KB_REPO" --search "$label" 2>/dev/null | grep -qiF "$label"; then
+    missing="$missing $label"
+  fi
+done
+if [ -n "$missing" ]; then
+  warn "Missing label(s) in $KB_REPO:$missing"
+  warn "  Create them once (a candidate issue needs kb:candidate; /kb opens a kb:draft PR):"
+  for label in $missing; do
+    warn "    gh label create \"$label\" --repo \"$KB_REPO\""
+  done
+else
+  ok "Labels present: kb:candidate, kb:draft"
+fi
+
+ok "Ready — KB writes go through gh against $KB_REPO."

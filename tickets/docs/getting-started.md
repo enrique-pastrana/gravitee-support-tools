@@ -7,8 +7,9 @@ the porting status, see the [README](../README.md) and
 
 > **Work in progress.** The whole day-to-day lifecycle is ready — `tickets-up`,
 > `new-ticket`, `log-updates`, `investigate`, `reproduce`, `reply`, `status`,
-> `stack` and `close`; a few specialist commands (KB articles, indexing) are
-> still on the way. This guide covers what works today.
+> `stack` and `close`, plus `kb-candidate` to flag a case for the knowledge base.
+> The rest of the KB flow (`/kb`, `/kb-publish`) and indexing are still on the
+> way. This guide covers what works today.
 
 ## What is this?
 
@@ -81,7 +82,22 @@ file lives somewhere else do you need to point at it:
 export IA_TOOLING_ENV="/path/to/your/.env"
 ```
 
-**3. Start the backing stack** (Docker + Ollama + the local services), from a
+**3. Point at your KB repo** (optional — only if you use the KB commands like
+`/kb-candidate`). The knowledge base lives in a GitHub repo you own, one article
+per file; `KB_REPO` is its `owner/name`:
+
+```bash
+# optional — only for the KB commands
+export KB_REPO="your-org/kb-articles"
+```
+
+First time only, you create that repo (private) and add two labels + an
+`articles/` folder — a couple of `gh` commands. There's also an **optional**
+kanban board (a GitHub Project) if you like seeing the pipeline at a glance. Full
+step-by-step in
+[the KB workflow reference](../references/kb-workflow.md#one-time-repo-setup-per-user).
+
+**4. Start the backing stack** (Docker + Ollama + the local services), from a
 Claude Code session with the plugin loaded:
 
 ```
@@ -133,6 +149,7 @@ A typical case, start to finish:
 | `/reply [number]` | Drafts an outbound reply, iterates with you in chat, and logs it only on your confirmation. | When it's time to answer the customer. |
 | `/status [number]` | Prints a concise summary — state, entry count, attachments, last entry. Read-only. | To catch up on a ticket at a glance. |
 | `/close [number]` | Mirrors the ticket's terminal state from Zendesk, stamps the resolution, logs a ✅ entry. | Once the customer confirms the case is done. |
+| `/kb-candidate <reason> [number]` | Flags the ticket as worth a KB article — opens a tracking Issue in your `$KB_REPO` (labeled `kb:candidate`) and records it on the ticket. | Mid-flow, the moment you realise a case is worth documenting. Needs `KB_REPO` set (see setup). |
 
 `[number]` is optional — the command resolves the ticket from what you're working
 on: an explicit number wins, otherwise it uses the **current ticket** (the one a

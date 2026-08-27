@@ -36,6 +36,7 @@ at their own `ia-tooling` checkout.
 | `IA_TOOLING_ENV` | No | `$IA_TOOLING_ROOT/.env` | Path to the `ia-tooling` `.env` file that holds your Zendesk credentials (read by `fetch_attachments.py` to download attachments). | Falls back to `$IA_TOOLING_ROOT/.env`. If that file is missing, attachment downloads fail with a "missing ZENDESK_* in env" error. |
 | `GRAVITEE_STACKER_BIN` | Only for `/stack` | — | Absolute path to the [`gravitee-stacker`](https://github.com/zach-sirotkin/gravitee-stacker) MCP binary — an **external** tool the `/stack` command drives to spin up local Gravitee stacks. `.mcp.json` uses it to start the server. | `${GRAVITEE_STACKER_BIN}` can't expand, so the gravitee-stacker MCP server fails to start and `/stack` has no tools. Every other command is unaffected. `/stack` runs `scripts/stack-preflight` to diagnose it. |
 | `APIM_LICENSE` | No | `~/.gravitee/license.key` | Path to your Gravitee EE license, used by both back-ends (gravitee-stacker for `apim`/`am`, the compose override for `gamma`). Needed for EE-only capabilities (native-Kafka, alert-engine, Debug mode; for gamma the Gamma modules); without it stacks come up in OSS mode. | Falls back to `~/.gravitee/license.key`, then OSS mode. |
+| `KB_REPO` | Only for the KB commands | — | The GitHub repo (`owner/name`) that holds your KB articles — where `/kb-candidate` opens tracking Issues and `/kb` opens draft PRs. Writes go through your own `gh` CLI. | `${KB_REPO}` can't resolve, so `/kb-candidate` (and the rest of the KB slice) stop at preflight with a clear message. Every other command is unaffected. |
 | `CLAUDE_PLUGIN_ROOT` | Automatic | — | Locates the plugin's own bundled `scripts/` and `templates/`. **Set by Claude Code — you never touch this.** | n/a — managed by Claude Code. |
 
 ```bash
@@ -44,6 +45,7 @@ export IA_TOOLING_ROOT="$HOME/ia-tooling"   # required — point at your ia-tool
 export TICKETS_ROOT="$HOME/TICKETS"         # optional — this is the default
 # export IA_TOOLING_ENV="$HOME/ia-tooling/.env"   # optional — only if your .env lives elsewhere
 # export GRAVITEE_STACKER_BIN="$HOME/.local/bin/gravitee-stacker"  # only for /stack
+# export KB_REPO="your-org/kb-articles"           # only for the KB commands
 ```
 
 ### Local Gravitee stacks (`/stack`, optional)
@@ -141,6 +143,31 @@ prints the URL table. `/stack list gamma` shows service state
 (`docker compose -p gravitee-gamma ps`); `/stack down gamma` stops it but keeps
 the data volumes (add a confirmed wipe only when you want a factory reset).
 
+### Knowledge base (`/kb-candidate`, …, optional)
+
+The KB commands turn resolved tickets into published KB articles, kept in a
+dedicated **GitHub repo** (`owner/name` in **`KB_REPO`**) — one article per
+Markdown file, with the article's lifecycle expressed as the repo's own git
+primitives:
+
+- a **candidate** is an **Issue** (`kb:candidate`) — `/kb-candidate` opens it;
+- a **draft in review** is an **open PR** (later `/kb`);
+- **published** is that **PR merged** (later `/kb-publish`).
+
+Writes (Issues, PRs, merges) go through your **own `gh` CLI** — install it once
+(`brew install gh`), authenticate (`gh auth login`, `repo` scope), and set
+`KB_REPO`. Reads and duplicate-detection use the read-only `github-mcp-server`
+MCP plus semantic `rag_search`. The repo is **private / employee-gated**, so
+internal references are safe inside it. `/kb-candidate` runs
+`scripts/kb-preflight` to check the write path before creating anything.
+
+The **one-time repo setup** is quick: create the repo private, add the two labels
+and an `articles/` folder (a few `gh` commands). A kanban **Project board** is
+**optional** — the commands work off the Issues/PRs and labels, so the board is
+just a view you can add if you want it. The full model, the four article types,
+and the step-by-step setup (including the board) live in
+[`references/kb-workflow.md`](references/kb-workflow.md).
+
 ### Zendesk credentials (inside the `ia-tooling` `.env`)
 
 These are **not** shell variables — they live inside the `ia-tooling` `.env`
@@ -184,6 +211,12 @@ Commands available so far:
 - **`/status [number]`** — print a concise summary of a ticket (state, entry
   count, attachments, last entry). Read-only; infers the ticket from the current
   directory if no number is given.
+- **`/kb-candidate [reason] [number]`** — flag a ticket as worth a KB article
+  (mid-flow, before it's written). Opens a tracking **Issue** in `KB_REPO`
+  labeled `kb:candidate`, records `kb_status`/`kb_issue` on the ticket, and notes
+  it in the timeline's KB section. First step of the KB lifecycle (`/kb` and
+  `/kb-publish` follow). Needs `gh` + `KB_REPO` — see
+  [Knowledge base](#knowledge-base-kb-candidate--optional).
 
 ## Requirements
 
