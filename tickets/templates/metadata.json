@@ -14,6 +14,12 @@
   "tags": [],
   "related_tickets": [],
   "kb_candidate": false,
+  "kb_status": null,
+  "kb_type": null,
+  "kb_issue": null,
+  "kb_pr": null,
+  "kb_url": null,
+  "kb_published_at": null,
   "next_entry": 1,
   "last_comment_id": null
 }

@@ -1,0 +1,130 @@
+# Reference: the KB article workflow
+
+How the KB slice works and why. The commands (`/kb-candidate`, `/kb`,
+`/kb-publish`) decide *when* to act; this is the *how* and the *why*, plus the
+**one-time repo setup** each user does once. Paths assume `${CLAUDE_PLUGIN_ROOT}`
+(plugin) and `$TICKETS_ROOT` (data).
+
+## The model: the KB lives in a GitHub repo
+
+KB articles are **not** kept in local disk folders. They live in a dedicated
+GitHub repo — one article per Markdown file under `articles/` — and the article's
+lifecycle **is** the repo's own git primitives. Nothing to reinvent, everything
+auditable, and the "queue" is just GitHub's issue/PR lists.
+
+| Lifecycle stage | Git-native representation | Set by |
+|---|---|---|
+| **Candidate** — worth writing, not written yet | an **Issue** labeled `kb:candidate` | `/kb-candidate` |
+| **Draft / in review** | an **open PR** (label `kb:draft`) adding `articles/<slug>.md`, closing the Issue | `/kb` |
+| **Published** | that **PR merged** to `main` | `/kb-publish` |
+
+The board view (Candidate → In review → Published) is a **GitHub Project** with
+native automations — see setup below. No workflow files, no Actions, nothing the
+plugin has to install into your repo.
+
+### Why a repo, not disk folders + index files
+
+The old `~/TICKETS` KB kept state in `_kb/candidates.md` + `_kb/tickets-index.md`
+(hand-maintained Markdown queues) and shared drafts to a Google Doc. The repo
+model replaces all of it: the Issue list *is* `candidates.md`, an open PR *is* a
+draft under review, a merge *is* "published". Simpler, more reliable, and shared
+by construction — no parallel index to drift.
+
+## No local clone — the Contents API
+
+`/kb` and `/kb-publish` never `git clone`. They read and write repo files through
+`gh api` (the GitHub Contents API) and manage Issues/PRs through `gh`. So the KB
+repo can be anywhere and the user needs no working copy of it on disk.
+
+## Credentials: writes via `gh`, reads via MCP
+
+Two paths, deliberately split:
+
+- **Writes** (create Issue, open PR, merge) → the user's **own `gh` CLI**, already
+  authenticated for their GitHub account. It needs the **`repo`** scope.
+- **Reads / dedup** → the **`github-mcp-server`** MCP (wired via `ia-tooling`).
+  That token is **read-only by design** (ia-tooling provisions it with minimum
+  read scope), so it can search the repo but must never be used to write. Do not
+  try to open Issues/PRs through the MCP — it will fail, and that's intentional.
+
+`scripts/kb-preflight` checks the **write** path (gh installed + authed, `$KB_REPO`
+set + reachable, labels present) before any command tries to create something.
+
+## Configuration: one variable
+
+| Variable | Required? | Default | What it controls |
+|---|---|---|---|
+| `KB_REPO` | Yes (for the KB commands) | — | The KB repo as `owner/name`, e.g. `your-org/kb-articles`. The single config for the whole slice, in the same spirit as `IA_TOOLING_ROOT` / `TICKETS_ROOT`. |
+
+Set it once in `~/.zshrc` / `~/.bashrc`:
+```bash
+export KB_REPO="your-org/kb-articles"
+```
+
+## The four KB types
+
+Every article is one of four types (Zendesk's classification); `/kb` picks a
+matching template:
+
+| Type | When it fits |
+|---|---|
+| **Problem / Solution** | A failure with a **known single root cause** and a concrete fix. |
+| **How-to** | A proactive task ("how to do X"); no failure involved. |
+| **Troubleshooting** | A failure **without one cause** — a diagnostic tree. |
+| **Question / Answer** | A conceptual doubt / "is this normal?" — an explanation, not a fix. |
+
+## Public vs. internal content
+
+The KB repo is **private / employee-gated**: only Gravitee staff can see it, so
+**internal references are safe inside it** — candidate Issues and draft articles
+may carry the ticket id, customer, Jira keys, engineering notes, repro details.
+
+Each article still separates a **public body** from an internal block with an
+`<!-- INTERNAL — DO NOT PUBLISH -->` separator (everything internal goes *below*
+it). That separator is what a **future** customer-facing publish step will cut on
+— a plugin-side script that emits only the public body to a public mirror
+(e.g. Zendesk Guide). That step is **out of scope for now** and deliberately
+**not** an Actions/workflow in the repo, so installing the plugin never requires
+the user to add CI to their KB repo. Until then: repo private, internal inline.
+
+## Dedup — don't write the same article twice
+
+Before generating (in `/kb`), check for an existing article covering the same
+symptom/component, two ways:
+
+- **Repo search** — the `github-mcp-server` MCP (or `gh search code --repo
+  $KB_REPO`) over `articles/`, plus the open `kb:candidate` / `kb:draft` Issues
+  and PRs, for the component, error string, or symptom keywords.
+- **Semantic** — `rag_search` (vectordb) for a meaning-level match, since the
+  same problem is often worded differently.
+
+If something already covers it, stop and offer to **extend** it (link this ticket
+to that article/Issue) rather than create a duplicate.
+
+## One-time repo setup (per user)
+
+Do this once, on the repo `$KB_REPO` points at. `/kb-preflight` verifies the
+parts it can; the Project board is a UI step it can't check.
+
+1. **Create it private.** One article per file will live under `articles/`.
+2. **Labels** (a candidate Issue needs `kb:candidate`; a draft PR uses `kb:draft`):
+   ```bash
+   gh label create "kb:candidate" --repo "$KB_REPO" --color FBCA04 \
+     --description "Ticket flagged as a KB article candidate"
+   gh label create "kb:draft" --repo "$KB_REPO" --color 1D76DB \
+     --description "KB article draft in review (open PR)"
+   ```
+3. **`articles/` folder** — seed it so it exists before the first PR:
+   ```bash
+   printf '# KB articles live here, one Markdown file per article.\n' \
+     | base64 | xargs -I{} gh api -X PUT "repos/$KB_REPO/contents/articles/.gitkeep" \
+       -f message="chore: seed articles/ folder" -f content={}
+   ```
+4. **Project board (optional, UI).** Create a GitHub **Project** ("KB pipeline")
+   with a **Status** field (`Candidate`, `In review`, `Published`) and two
+   **built-in workflows** (Project → ⚙ → Workflows — native, no Actions file):
+   - *Item added to project* → set Status = **Candidate**;
+   - *Item closed* → set Status = **Published**.
+   Then Project settings → add `$KB_REPO` so new Issues/PRs auto-add. This needs
+   the `project` / `read:project` gh scope (`gh auth refresh -s project`) or just
+   do it in the web UI. The commands work without the board — it's a view.

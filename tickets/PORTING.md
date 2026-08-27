@@ -209,3 +209,45 @@ scheduled:
   that file, so it wouldn't be picked up anyway. Shell env vars stay the
   mechanism; `getting-started.md` now covers `IA_TOOLING_ENV` and links to the
   README table as the authoritative reference.
+- **2026-08-27** — Branch `kb-articles-slice-1-candidate`. Started the **KB
+  articles slice** (PR 1 of 3: foundation + `/kb-candidate`). Big design change
+  from the source, agreed with the user: **the KB lives in a GitHub repo**, not
+  local disk folders + hand-maintained index files (`_kb/candidates.md`,
+  `_kb/tickets-index.md`). The article lifecycle *is* the repo's git primitives —
+  **candidate = Issue** (`kb:candidate`), **draft/review = open PR** (`kb:draft`),
+  **published = PR merged**; the board is a native GitHub **Project** (auto-add +
+  closed→Published), configured once in the UI (no Actions/workflow files, so
+  installing the plugin never forces CI into the user's repo). One config var,
+  **`KB_REPO=owner/name`**. Credentials split deliberately: **writes** (Issue/PR/
+  merge) via the user's own **`gh`** CLI (`repo` scope); **reads/dedup** via the
+  read-only `github-mcp-server` MCP + semantic `rag_search`. No local clone —
+  `/kb` and `/kb-publish` (later PRs) will use the `gh api` Contents API. Repo is
+  **private / employee-gated**, so internal refs are safe inline; a *future*
+  plugin-side sanitized-publish step (cutting at `<!-- INTERNAL — DO NOT PUBLISH
+  -->`) will feed a public mirror — out of scope here, and not an Actions
+  dependency by design. Shipped in this PR:
+  - **schema** — added KB fields to `templates/metadata.json` and `set_meta.py`
+    (`kb_status`, `kb_type`, `kb_url`, `kb_published_at` as nullable strings;
+    `kb_issue`, `kb_pr` as nullable ints). Kept the legacy `kb_candidate` bool and
+    have `/kb-candidate` set it alongside `kb_status` so `/close --kb-candidate`
+    and older reads stay in sync; `kb_status` is the new source of truth.
+  - **`scripts/kb-preflight`** — mirrors `stack-preflight`: checks `gh` installed
+    + authed, `$KB_REPO` set + reachable, and the `kb:candidate`/`kb:draft`
+    labels; checks the **write** path only (the MCP read path is separate).
+  - **`commands/kb-candidate.md`** — reworked for the new model: resolves the
+    ticket (shared `resolve-ticket.md` chain), preflights, dedup-guards on an
+    existing `kb_issue`, creates the Issue via `gh` **on confirmation** (outward
+    write), records `kb_status=candidate`/`kb_candidate=true`/`kb_issue` via
+    `set_meta.py` + `bump_entry.py --touch`, and links the Issue in the timeline's
+    `## 📚 KB article draft` section. No `[NNN]` entry, no `_kb/` files.
+  - **`references/kb-workflow.md`** — the deep doc: the lifecycle↔git mapping, the
+    4 types, the credential split, dedup, the public/internal policy, and the
+    **one-time repo setup** spec (labels, `articles/`, Project board + its 2
+    native automations).
+  - **README** — `KB_REPO` config row + a "Knowledge base" subsection + the
+    `/kb-candidate` command entry.
+  User's KB repo (`enrique-pastrana/kb-articles`) provisioned to spec: private,
+  labels + `articles/` created via `gh`; the Project board is the user's UI step
+  (gh token lacks `project` scope). `kb-preflight` passes live against it. Next:
+  PR 2 (`/kb` — generate draft, open PR via Contents API, port the 4 templates) and
+  PR 3 (`/kb-publish` — merge, index into vectordb, record the URL).

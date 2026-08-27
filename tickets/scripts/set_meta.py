@@ -14,7 +14,8 @@ being silently turned into a float. Kinds:
              a JSON array (["a","b"]) or a comma-separated list (a,b,c);
              empty string -> [].
     bool     kb_candidate               true / false
-    int      next_entry                 whole number
+    int      next_entry,                whole number; kb_issue / kb_pr are
+             kb_issue, kb_pr            nullable ("null" clears them)
     number   resolution_time_hours,     int or float; "null" clears it
              last_comment_id
 
@@ -38,14 +39,18 @@ from ticket_paths import resolve_ticket_dir
 # non-string sets below is treated as a plain string.
 LIST_KEYS = {"tags", "related_tickets"}
 BOOL_KEYS = {"kb_candidate"}
-INT_KEYS = {"next_entry"}
+INT_KEYS = {"next_entry", "kb_issue", "kb_pr"}
 NUMBER_KEYS = {"resolution_time_hours", "last_comment_id"}  # int/float, nullable
 STRING_KEYS = {
     "ticket_id", "zendesk_url", "subject", "customer", "product", "version",
     "priority", "status", "opened_at", "updated_at", "resolved_at",
+    "kb_status", "kb_type", "kb_url", "kb_published_at",
 }
 # Fields whose literal "null" means JSON null (clear the field).
-NULLABLE_KEYS = {"resolved_at", "resolution_time_hours", "last_comment_id"}
+NULLABLE_KEYS = {
+    "resolved_at", "resolution_time_hours", "last_comment_id",
+    "kb_issue", "kb_pr", "kb_status", "kb_type", "kb_url", "kb_published_at",
+}
 
 KNOWN_KEYS = LIST_KEYS | BOOL_KEYS | INT_KEYS | NUMBER_KEYS | STRING_KEYS
 
