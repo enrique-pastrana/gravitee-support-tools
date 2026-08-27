@@ -155,8 +155,12 @@ file, nothing installed into your repo). All in the web UI — one time, ~5 min:
 
 Reading/managing the board via `gh` (e.g. `gh project item-list`) needs the
 `project` scope: `gh auth refresh -s project` (or `read:project` for read-only).
-The web UI needs no extra scope. **`In review`** isn't set by an automation —
-`/kb` moves the draft PR there when it opens it.
+The web UI needs no extra scope. **`In review`** has no automation — a draft PR
+lands as `Candidate` like any item. `/kb` makes a **best-effort** move to
+`In review` when it opens the PR *only if* the token has the `project` scope;
+without it (or without a board) it skips silently, since the board is optional and
+the open `kb:draft` PR is the real source of truth. Move it yourself in the UI if
+you prefer (one drag).
 
 > **Automating it?** Steps 1–3 (repo/labels/`articles/`) are trivial to script and
 > a `/kb-setup` command may fold them in. The board's built-in workflows (step 4)

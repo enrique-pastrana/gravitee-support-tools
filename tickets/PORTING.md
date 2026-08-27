@@ -251,3 +251,36 @@ scheduled:
   (gh token lacks `project` scope). `kb-preflight` passes live against it. Next:
   PR 2 (`/kb` — generate draft, open PR via Contents API, port the 4 templates) and
   PR 3 (`/kb-publish` — merge, index into vectordb, record the URL).
+  PR 1 merged to `main` 2026-08-27 (squash `469545a`); a follow-up commit added
+  the KB onboarding docs (setup split Mandatory vs Optional-board, `KB_REPO` in
+  getting-started, board LIVE-verified e2e). `/kb-candidate` live-tested e2e too
+  (real Issue created, dedup guard held).
+- **2026-08-27** — Branch `kb-articles-slice-2-kb`. **KB slice PR 2: `/kb`** —
+  turn a candidate into a **draft article** as an open PR. `commands/kb.md`:
+  preflight → resolve ticket (`$ARGUMENTS` = number) → require a `kb_issue`
+  candidate → anti-duplicate (repo code search + open `kb:draft` PRs + `rag_search`)
+  → decide KB-worthy + classify into one of the 4 types (confirm with user) →
+  **generate the article from the template, show it in chat, iterate** → **on
+  confirmation open the PR with zero clone, all `gh api`**: branch `kb/<ticket>-<slug>`
+  off the default branch, PUT `articles/<slug>.md` (base64) on it, `POST …/pulls`
+  with body `Closes #<kb_issue>`, label it `kb:draft` → **best-effort** board move
+  to *In review* (skipped silently without the `project` scope — board is optional)
+  → `set_meta.py kb_status=draft/kb_pr=<n>/kb_type` + `bump_entry.py --touch` →
+  link the PR in the timeline's `## 📚 KB article draft` section. No `[NNN]` entry.
+  Ported the **4 KB templates** to `templates/` (`kb_article.md` — our richer
+  Problem/Solution format with a Validation section; `kb_howto.md`,
+  `kb_troubleshooting.md`, `kb_question_answer.md` — the Zendesk-classification
+  templates), each keeping the `<!-- INTERNAL — DO NOT PUBLISH -->` separator with
+  the internal block below it (source ticket, KB Issue URL, related/Jira/repro).
+  Board fork settled with the user: **best-effort if scope**. Updated
+  `references/kb-workflow.md` (In-review note → best-effort), README (`/kb` command
+  entry + lifecycle bullet), getting-started (command row + WIP banner).
+  **Live-tested e2e (Claude headless, sandbox ticket 99999 with a realistic
+  timeline + a real candidate Issue via `/kb-candidate`):** `/kb` opened PR #4
+  (`kb:draft`, `Closes #3`), wrote `articles/apim-gateway-oom-response-template-policy.md`
+  with a genuinely good Problem/Solution article — **public body clean of the
+  customer name** (AcmeCorp only appears below the INTERNAL separator), specific
+  root cause, YAML solution, validation, doc-only Related; metadata moved
+  `candidate → draft` with `kb_pr=4`, `next_entry` unchanged, timeline updated; the
+  board nudge skipped cleanly (no scope). Test PR/Issue/branch deleted, `main`'s
+  `articles/` back to just `.gitkeep`, sandbox wiped. `plugin validate --strict` ✔.
