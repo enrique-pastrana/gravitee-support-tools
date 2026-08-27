@@ -7,9 +7,9 @@ the porting status, see the [README](../README.md) and
 
 > **Work in progress.** The whole day-to-day lifecycle is ready — `tickets-up`,
 > `new-ticket`, `log-updates`, `investigate`, `reproduce`, `reply`, `status`,
-> `stack` and `close`, plus `kb-candidate` and `kb` to flag a case and draft its
-> knowledge-base article. The last KB step (`/kb-publish`) and indexing are still
-> on the way. This guide covers what works today.
+> `stack` and `close`, plus the full KB slice — `kb-candidate`, `kb` and
+> `kb-publish` — to flag a case, draft its knowledge-base article, and publish it.
+> This guide covers what works today.
 
 ## What is this?
 
@@ -151,6 +151,7 @@ A typical case, start to finish:
 | `/close [number]` | Mirrors the ticket's terminal state from Zendesk, stamps the resolution, logs a ✅ entry. | Once the customer confirms the case is done. |
 | `/kb-candidate <reason> [number]` | Flags the ticket as worth a KB article — opens a tracking Issue in your `$KB_REPO` (labeled `kb:candidate`) and records it on the ticket. | Mid-flow, the moment you realise a case is worth documenting. Needs `KB_REPO` set (see setup). |
 | `/kb [number]` | Turns a candidate into a draft article: generates it from the timeline, iterates with you in chat, then opens a draft PR (`kb:draft`) in your `$KB_REPO`. | Once the case is resolved and you want to write up the KB article. Needs `KB_REPO` set. |
+| `/kb-publish [number]` | Merges the draft PR (closing the candidate Issue), indexes the article into the vectordb, and records the published URL on the ticket. | Once the draft PR is reviewed and approved. Needs `KB_REPO` set. |
 
 `[number]` is optional — the command resolves the ticket from what you're working
 on: an explicit number wins, otherwise it uses the **current ticket** (the one a

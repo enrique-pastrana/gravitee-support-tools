@@ -152,7 +152,8 @@ primitives:
 
 - a **candidate** is an **Issue** (`kb:candidate`) — `/kb-candidate` opens it;
 - a **draft in review** is an **open PR** (`kb:draft`) — `/kb` generates it;
-- **published** is that **PR merged** (later `/kb-publish`).
+- **published** is that **PR merged** to `main` — `/kb-publish` merges it (which
+  closes the candidate Issue) and indexes the article into the vectordb.
 
 Writes (Issues, PRs, merges) go through your **own `gh` CLI** — install it once
 (`brew install gh`), authenticate (`gh auth login`, `repo` scope), and set
@@ -222,6 +223,12 @@ Commands available so far:
   (`kb:draft`) adding `articles/<slug>.md` to `KB_REPO` — no local clone, all via
   the `gh` Contents API — set to close the candidate Issue on merge. Records
   `kb_status=draft`/`kb_pr` on the ticket. Second step of the KB lifecycle. Needs
+  `gh` + `KB_REPO` — see [Knowledge base](#knowledge-base-kb-candidate--optional).
+- **`/kb-publish [number]`** — **publish** the draft. Merges the `kb:draft` PR to
+  `main` (squash, which closes the candidate Issue), fetches the merged article
+  via the `gh` Contents API and **indexes it into the vectordb**, then records
+  `kb_status=published`/`kb_url`/`kb_published_at` on the ticket. Confirms before
+  merging and never merges a conflicting PR. Final step of the KB lifecycle. Needs
   `gh` + `KB_REPO` — see [Knowledge base](#knowledge-base-kb-candidate--optional).
 
 ## Requirements
