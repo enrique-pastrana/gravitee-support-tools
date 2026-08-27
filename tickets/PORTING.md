@@ -284,3 +284,33 @@ scheduled:
   `candidate → draft` with `kb_pr=4`, `next_entry` unchanged, timeline updated; the
   board nudge skipped cleanly (no scope). Test PR/Issue/branch deleted, `main`'s
   `articles/` back to just `.gitkeep`, sandbox wiped. `plugin validate --strict` ✔.
+- **2026-08-27** — Branch `kb-articles-slice-3-publish`. **KB slice PR 3:
+  `/kb-publish`** — the final KB step, publishes the draft. `commands/kb-publish.md`:
+  preflight → resolve ticket (`$ARGUMENTS` = number) → require `kb_pr` set (else
+  suggest `/kb`/`/kb-candidate`) and refuse if already `published` → **inspect the
+  PR** via `gh pr view --json state,mergeable,url,title,reviewDecision,files`
+  (MERGED out-of-band → reconcile-only; CLOSED → rejected, stop; OPEN+CONFLICTING
+  or missing review → surface, stop; OPEN+mergeable → report) → **confirm, then
+  merge** `gh pr merge <kb_pr> --squash --delete-branch` (squash → one commit; the
+  PR body's `Closes #<kb_issue>` closes the candidate Issue; branch deleted) →
+  resolve canonical URL `https://github.com/$KB_REPO/blob/<def>/articles/<slug>.md`
+  (git-native, replaces the old Google Doc URL — no user input) + **fetch the merged
+  article raw** (`gh api …/contents/<file>?ref=<def> -H "Accept:
+  application/vnd.github.raw"`, no base64) → **index into vectordb** with the ported
+  `scripts/index_kb.py` → `set_meta.py kb_status=published/kb_url/kb_published_at`
+  + `bump_entry.py --touch` (kb_issue/kb_pr kept for traceability) → append a ✅
+  Published line to the timeline's `## 📚 KB article draft` section. No `[NNN]` entry.
+  **Ported `scripts/index_kb.py`** — decoupled from ticket folders (the article now
+  lives in the KB repo, not local disk): takes `<ticket> --file <article.md> --url
+  <kb_url> [--path <rel>]` instead of reading `kb_article_draft.md`; drops the
+  `ticket_paths` import; indexes the FULL article (INTERNAL block included — private
+  db) with a prepended title+URL header; upsert identity = (source="tickets",
+  path=`articles/<slug>.md`); exit 2 on vectordb-down is non-blocking (record, tell
+  user to `/tickets:tickets-up` + re-run). Docs: README (`/kb-publish` command entry
+  + lifecycle "published = PR merged" bullet), getting-started (command row + WIP
+  banner now lists the full KB slice). `plugin validate --strict` ✔; `index_kb.py`
+  error paths smoke-tested (missing file → 1, vectordb down → 2 graceful); step-6
+  raw-fetch mechanism proven **live read-only** against `enrique-pastrana/kb-articles`
+  (default branch `main`, `Accept: raw` returns file body). Destructive e2e (real
+  `gh pr merge` + real ingest) deliberately deferred with the user to a real-ticket
+  run once the slice is complete.
