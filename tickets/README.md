@@ -151,7 +151,7 @@ Markdown file, with the article's lifecycle expressed as the repo's own git
 primitives:
 
 - a **candidate** is an **Issue** (`kb:candidate`) — `/kb-candidate` opens it;
-- a **draft in review** is an **open PR** (later `/kb`);
+- a **draft in review** is an **open PR** (`kb:draft`) — `/kb` generates it;
 - **published** is that **PR merged** (later `/kb-publish`).
 
 Writes (Issues, PRs, merges) go through your **own `gh` CLI** — install it once
@@ -217,6 +217,12 @@ Commands available so far:
   it in the timeline's KB section. First step of the KB lifecycle (`/kb` and
   `/kb-publish` follow). Needs `gh` + `KB_REPO` — see
   [Knowledge base](#knowledge-base-kb-candidate--optional).
+- **`/kb [number]`** — turn a candidate into a **draft article**. Generates it
+  from the timeline, lets you iterate in chat, then opens a draft **PR**
+  (`kb:draft`) adding `articles/<slug>.md` to `KB_REPO` — no local clone, all via
+  the `gh` Contents API — set to close the candidate Issue on merge. Records
+  `kb_status=draft`/`kb_pr` on the ticket. Second step of the KB lifecycle. Needs
+  `gh` + `KB_REPO` — see [Knowledge base](#knowledge-base-kb-candidate--optional).
 
 ## Requirements
 
