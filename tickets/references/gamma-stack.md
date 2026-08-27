@@ -17,10 +17,10 @@ plugin-shipped **official docker-compose** using **public Docker Hub images**
   `${CLAUDE_PLUGIN_ROOT}/templates/docker-compose-gamma.yml`;
 - is a **singleton on canonical ports** (`8082`–`8086`) with a fixed compose project
   `gravitee-gamma` — **one Gamma at a time**, no instance name, ports don't remap;
-- needs **no ACR login and no side-by-side module repos**. (That heavier path — Zach's
+- needs **no ACR login and no side-by-side module repos**. (The heavier SDK path —
   `gravitee-gamma-modules-sdk` + stacker `stack_*` tools, private Azure Container
   Registry, locally-built `alpha` plugins, SPIRE/edge/nginx — is a *dev inner-loop* for
-  people building the Gamma modules, not for reproducing released customer setups.)
+  people building the modules, not for reproducing released customer setups.)
 
 **Requirements:** Docker Desktop running. That's it for OSS. Agent Management and the
 other license-gated modules need the Enterprise license below — everything else runs
@@ -29,9 +29,8 @@ without one.
 ## Versioning
 
 Every `graviteeio/*` image is pinned to `${GAMMA_VERSION:-4.12}`. Gamma needs **4.12+**
-(the Gamma module plugins ship inside 4.12 and later images). `/stack up gamma@<version>`
-sets `GAMMA_VERSION` for that run, e.g. `/stack up gamma@4.13`. Pin the version a
-customer runs to reproduce their environment.
+(the module plugins ship inside 4.12 and later images). `/stack up gamma@<version>` sets
+`GAMMA_VERSION` for that run — pin the version a customer runs to reproduce their setup.
 
 ## The Enterprise license (one-time)
 
