@@ -1,15 +1,9 @@
 # Getting started with the `tickets` plugin
 
-A friendly first-time guide. If you just installed the plugin and want to know
-what it does and how to use it day to day, start here. (For setup internals and
-the porting status, see the [README](../README.md) and
-[PORTING.md](../PORTING.md).)
-
-> **Work in progress.** The whole day-to-day lifecycle is ready — `tickets-up`,
-> `new-ticket`, `log-updates`, `investigate`, `reproduce`, `reply`, `status`,
-> `stack` and `close`, plus the full KB slice — `kb-candidate`, `kb` and
-> `kb-publish` — to flag a case, draft its knowledge-base article, and publish it.
-> This guide covers what works today.
+A friendly, first-time guide: how to **install** the plugin, **configure** it, and
+then use it day to day. Follow it top to bottom the first time; after that you'll
+only come back for the command reference. (For repository/setup internals see the
+[README](../README.md) and [PORTING.md](../PORTING.md).)
 
 ## What is this?
 
@@ -23,14 +17,139 @@ You drive it with slash commands (`/new-ticket`, `/log-updates`, `/investigate`,
 `/reply`, …). Each command does one job: pull the ticket in, log what the
 customer said, record an investigation step, draft a reply, print a status.
 
-## The mental model (read this once)
+---
 
-**One folder per ticket**, in *your* workspace — not inside the plugin. By
-default that's `~/TICKETS`; tickets are grouped by thousand, so ticket 17952
-lives in:
+## 1. Install it (once per machine)
+
+The plugin ships through a Claude Code **marketplace** (a catalogue). Installing
+is two steps: add the catalogue, then install the plugin from it.
+
+Run these inside any Claude Code session (terminal or VS Code):
 
 ```
-~/TICKETS/17000/17952/
+/plugin marketplace add enrique-pastrana/gravitee-support-tools
+/plugin install tickets@gravitee-support-tools
+```
+
+- The first line registers the catalogue (it's a public GitHub repo, so the
+  `owner/repo` shorthand is enough — no clone, no path).
+- The second opens the plugin's details and **asks which scope** you want.
+  Choose **User** — it installs it for your whole machine, every project.
+- If the session says *"Run `/reload-plugins`"*, run it. Otherwise it's active
+  immediately.
+
+Prefer a menu? Just run `/plugin`, go to **Discover**, pick **tickets**, and
+install from there — same result.
+
+### It's available in the terminal *and* in VS Code — automatically
+
+Installing to **User** scope writes to `~/.claude/settings.json`, and **both the
+terminal CLI and the VS Code extension read that same file.** So you install
+once and it's there in both places. If a surface was already open when you
+installed, restart it or run `/reload-plugins`; new sessions pick it up on their
+own.
+
+### Keeping it up to date
+
+When the plugin gets new versions, refresh the catalogue and reload:
+
+```
+/plugin marketplace update gravitee-support-tools
+/reload-plugins
+```
+
+> **Note for the dev flow:** while developing the plugin we loaded it with
+> `claude --plugin-dir …`. That's session-only and for testing. For real daily
+> use, install it from the marketplace as above — it persists across restarts and
+> is the same in every session and surface.
+
+---
+
+## 2. Configure it (once)
+
+The plugin has **no config file of its own** — it's configured entirely with a
+few environment variables. Here's the whole list:
+
+| Variable | Required? | What it points to | Default |
+|---|---|---|---|
+| `IA_TOOLING_ROOT` | **Required** | Your `ia-tooling` checkout — how the plugin reaches Zendesk, search and the vector DB. | — |
+| `TICKETS_ROOT` | Optional | Where your ticket folders are created and stored. | `~/TICKETS` |
+| `KB_REPO` | Optional* | Your knowledge-base GitHub repo, as `owner/name`. | — |
+| `IA_TOOLING_ENV` | Optional | Your `ia-tooling` `.env` file, only if it isn't at the default place. | `$IA_TOOLING_ROOT/.env` |
+| `GRAVITEE_STACKER_BIN` | Optional | The `gravitee-stacker` binary, only if you use `/stack` and it isn't on your `PATH`. | on `PATH` |
+
+\* Needed only for the KB commands (`/kb-candidate`, `/kb`, `/kb-publish`).
+
+Your **Zendesk credentials are not set here** — they live in the `ia-tooling`
+`.env` file, which the plugin finds at `$IA_TOOLING_ROOT/.env`.
+
+### Where to put these so BOTH terminal and VS Code see them
+
+This is the one gotcha worth getting right. The **reliable, works-everywhere**
+place is the `env` block in **`~/.claude/settings.json`** — Claude Code reads it
+the same way whether you're in the terminal or the VS Code extension:
+
+```jsonc
+// ~/.claude/settings.json
+{
+  "env": {
+    "IA_TOOLING_ROOT": "/Users/you/ia-tooling",
+    "TICKETS_ROOT":    "/Users/you/TICKETS",
+    "KB_REPO":         "your-org/kb-articles"
+  }
+}
+```
+
+> **Use full absolute paths here** (`/Users/you/…`, not `~` or `${HOME}`). This
+> block takes values literally — shell expansion is not guaranteed. Only add the
+> lines you need; `IA_TOOLING_ROOT` is the only required one.
+
+**Alternative — shell profile.** If you only use the terminal, or prefer your
+`~/.zshrc`, exports work there and `${HOME}` expands normally:
+
+```bash
+# ~/.zshrc
+export IA_TOOLING_ROOT="${HOME}/ia-tooling"
+export TICKETS_ROOT="${HOME}/TICKETS"
+export KB_REPO="your-org/kb-articles"
+```
+
+Just know that **the VS Code extension may not inherit your `~/.zshrc`**. If you
+go this route and use VS Code, either launch it from a terminal with `code .`
+(so it inherits your shell), or use the `settings.json` method above — which is
+why it's the recommendation.
+
+### KB repo — one-time repo setup
+
+If you'll use the KB commands, `KB_REPO` points at a GitHub repo you own (one
+article per file). The first time, you create it **private** and add two labels
+plus an `articles/` folder — a couple of `gh` commands. There's also an
+**optional** kanban board (a GitHub Project) to see the pipeline at a glance.
+Full step-by-step in
+[the KB workflow reference](../references/kb-workflow.md#one-time-repo-setup-per-user).
+
+### Start the backing stack
+
+Finally, from a session with the plugin loaded, bring up the stack (Docker +
+Ollama + the local services):
+
+```
+/tickets-up
+```
+
+Run `/tickets-up` first each session. If any command later says the stack is
+down, come back and run it again — it's the single place that starts and heals
+the stack.
+
+---
+
+## The mental model (read this once)
+
+**One folder per ticket**, in *your* workspace (`$TICKETS_ROOT`) — not inside the
+plugin. Tickets are grouped by thousand, so ticket 17952 lives in:
+
+```
+$TICKETS_ROOT/17000/17952/
 ├── timeline.md      ← the story of the case, in order
 ├── metadata.json    ← structured facts (customer, product, status, …)
 └── received/        ← attachments downloaded from Zendesk
@@ -50,63 +169,6 @@ message it writes the *main points* plus any load-bearing specifics (exact
 errors, versions, config) verbatim — and keeps a `🔗 Zendesk comment #<id>`
 pointer so you can always jump back to the exact words in Zendesk. This keeps
 the timeline cheap to read.
-
-## One-time setup
-
-You need two things set once, and the backing stack running. Everything is
-configured with **shell environment variables** — there's no config file to
-edit. (For the full list, defaults and failure modes, see
-[Configuration in the README](../README.md#configuration).)
-
-**1. Tell the plugin where your ticket data goes** (optional — defaults to
-`~/TICKETS`):
-
-```bash
-export TICKETS_ROOT="$HOME/TICKETS"
-```
-
-**2. Tell it where your `ia-tooling` checkout is** (required — this is how it
-reaches Zendesk, search, etc.):
-
-```bash
-# add to ~/.zshrc or ~/.bashrc
-export IA_TOOLING_ROOT="$HOME/ia-tooling"
-```
-
-Your Zendesk credentials aren't set here — they live in the `ia-tooling` `.env`
-file, which the plugin finds at `$IA_TOOLING_ROOT/.env` by default. Only if that
-file lives somewhere else do you need to point at it:
-
-```bash
-# optional — only if your ia-tooling .env is not at $IA_TOOLING_ROOT/.env
-export IA_TOOLING_ENV="/path/to/your/.env"
-```
-
-**3. Point at your KB repo** (optional — only if you use the KB commands like
-`/kb-candidate`). The knowledge base lives in a GitHub repo you own, one article
-per file; `KB_REPO` is its `owner/name`:
-
-```bash
-# optional — only for the KB commands
-export KB_REPO="your-org/kb-articles"
-```
-
-First time only, you create that repo (private) and add two labels + an
-`articles/` folder — a couple of `gh` commands. There's also an **optional**
-kanban board (a GitHub Project) if you like seeing the pipeline at a glance. Full
-step-by-step in
-[the KB workflow reference](../references/kb-workflow.md#one-time-repo-setup-per-user).
-
-**4. Start the backing stack** (Docker + Ollama + the local services), from a
-Claude Code session with the plugin loaded:
-
-```
-/tickets-up
-```
-
-Run `/tickets-up` first each session. If any other command tells you the stack
-is down, come back and run it again — it's the single place that starts and
-heals the stack.
 
 ## A day in the life
 
@@ -135,8 +197,11 @@ A typical case, start to finish:
 7. **Wrap it up:** `/close`
    Once the customer confirms, mirrors the ticket's terminal state from Zendesk
    (solved → resolved, closed → closed), stamps the resolution and logs a ✅ entry.
+8. **Capture the knowledge (optional):** if the case is worth documenting,
+   `/kb-candidate <reason>` → `/kb` → `/kb-publish` turns it into a published KB
+   article (see the commands table and the KB workflow reference).
 
-## The commands you have today
+## The commands you have
 
 | Command | What it does | When to use it |
 |---|---|---|
@@ -164,6 +229,24 @@ pass the number after it if you need to.)
 [`gravitee-stacker`](https://github.com/zach-sirotkin/gravitee-stacker) tool plus
 Docker — see [Local Gravitee stacks in the README](../README.md#local-gravitee-stacks-stack-optional).
 Without it every other command works fine.
+
+### Publishing a KB article — reviewing on GitHub first
+
+`/kb` opens the draft as a **pull request** in your `$KB_REPO`. The natural,
+safest way to publish is to **review and merge that PR on GitHub yourself**, then
+run `/kb-publish` — it notices the PR is already merged and just does the
+bookkeeping (fetches the article, indexes it into the vectordb, records the
+published URL on the ticket, closes the candidate Issue).
+
+Alternatively, `/kb-publish` can do the merge for you. Because merging is an
+outward, irreversible action, Claude Code will ask you to confirm the `gh pr
+merge` command the first time. If you publish often and want to skip that prompt,
+add an allow rule to your settings:
+
+```jsonc
+// ~/.claude/settings.json
+{ "permissions": { "allow": ["Bash(gh pr merge:*)"] } }
+```
 
 ## When the stack is down
 
