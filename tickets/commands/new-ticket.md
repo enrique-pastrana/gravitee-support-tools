@@ -82,7 +82,33 @@ Start a new ticket.
    — why the scoping matters, using the printed `path` values verbatim for links,
    the `attach.py` fallback, and reading what you downloaded.
 
-8. **Prior art — read-only.** Search the `vectordb` MCP for precedents to the
+8. **Fold in the rest of the thread — via a subagent.** `[001]` captured only
+   the opening comment. Step 3 already told you the comment count: if the opening
+   comment is the **only** one, skip this step. Otherwise there's earlier activity
+   the timeline is still missing — bring it in now, but **off the main context** so
+   a long thread (many comments, big logs, attachments) doesn't bloat this session.
+   That offloading is the whole point of the subagent.
+   - **Announce, don't ask** — e.g. "Ticket has N comments; folding the rest into
+     the timeline via a subagent." (The baseline is already persisted:
+     `last_comment_id` = the opening comment id from step 4, so only comments
+     **after** `[001]` get pulled — no overlap, no gap.)
+   - Launch **one** subagent (Agent tool, `general-purpose`) and **wait** for it
+     (`run_in_background: false` — the ticket should come back complete). Give it:
+     the ticket number `<number>`, and the **absolute** plugin root (the value of
+     `${CLAUDE_PLUGIN_ROOT}`) so its own shell finds the scripts. Instruct it to
+     **run `/log-updates` for `<number>` end to end** — invoke the
+     `tickets:log-updates` skill, or follow
+     `${CLAUDE_PLUGIN_ROOT}/commands/log-updates.md` — and, because the baseline is
+     already set, to proceed **non-interactively** (no gap/backfill question is due
+     here). It must return a **compact report only**: entries added (`[NNN]` + one
+     line each) and the new `last_comment_id` — never echo verbatim thread content.
+   - When it returns, **relay** its one-line-per-entry summary. It already wrote the
+     entries, pulled their attachments, refreshed the exec summary and advanced the
+     cursor — don't redo any of that here.
+   - Subagent unavailable / errors out → fall back to telling the user to run
+     `/log-updates` themselves.
+
+9. **Prior art — read-only.** Search the `vectordb` MCP for precedents to the
    opening symptom, following
    `${CLAUDE_PLUGIN_ROOT}/references/search-precedents.md` (query by literals,
    one `rag_search` per literal, how to read the hybrid-vs-cosine score). Skip if
@@ -93,8 +119,9 @@ Start a new ticket.
      → say so in one line. **Add nothing to the timeline here** — real digging is
      `/investigate`'s job.
 
-9. **Finish** — print the ticket path and suggest a next step (`/investigate`,
-   `/log-updates`, `/reproduce`).
+10. **Finish** — print the ticket path and suggest a next step (`/investigate`,
+    `/reproduce`). The thread is already fully logged (step 8), so `/log-updates`
+    isn't the natural next move on a fresh open.
 
 ## Don'ts
 
