@@ -18,18 +18,22 @@ Start a new ticket.
    ```bash
    python3 "${CLAUDE_PLUGIN_ROOT}/scripts/init_ticket.py" <number>
    ```
-   - **On success** it prints the path it created. Make it the current ticket so
-     later commands don't need the number again (see
+   - **On success** it prints the path it created. Make it **this window's**
+     ticket by moving into its folder, so later commands resolve it from cwd (see
      `${CLAUDE_PLUGIN_ROOT}/references/resolve-ticket.md`):
      ```bash
-     python3 "${CLAUDE_PLUGIN_ROOT}/scripts/current_ticket.py" set <number>
+     cd "$(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/ticket_paths.py" <number>)"
      ```
+     If the `cd` gets reset out of the folder, `$TICKETS_ROOT` isn't a working
+     directory of this session — tell the user to relaunch from `$TICKETS_ROOT`
+     or run `/add-dir "$TICKETS_ROOT"`, then retry.
    - **If it already exists** (the script exits non-zero, refusing to overwrite):
      don't stop cold — the ticket is already tracked. Overwrite nothing; instead
-     **offer to resume it**: set it as the current ticket (`current_ticket.py set
-     <number>`), read its `metadata.json` and give a one-line `/status`-style
-     recap, and suggest `/log-updates` to fold in anything new since. Then skip
-     the rest of this command — steps 3–9 are for a fresh ticket.
+     **offer to resume it**: move this window into its folder (`cd "$(python3
+     "${CLAUDE_PLUGIN_ROOT}/scripts/ticket_paths.py" <number>)"`), read its
+     `metadata.json` and give a one-line `/status`-style recap, and suggest
+     `/log-updates` to fold in anything new since. Then skip the rest of this
+     command — steps 3–9 are for a fresh ticket.
 
 3. **Pull from Zendesk** — fetch ticket `<number>` (detail + comments) via the
    `zendesk` MCP. Extract: `subject`, `customer` (org or requester), `priority`,

@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json) gets a matching entry
 > here, in the same PR — so the changelog never drifts from what shipped.
 
+## [0.0.4] - 2026-08-28
+
+### Changed
+- **Current-ticket resolution is now per-window via cwd.** The window a command
+  acts on is the ticket whose folder the shell sits in, so working two tickets in
+  two windows no longer collides. Saying "let's work on `<number>`" (and
+  `/new-ticket`) now `cd`s the window into that ticket's folder instead of writing
+  the shared global pointer. The `$TICKETS_ROOT/.current-ticket` file remains only
+  as a single-window fallback for when the shell isn't in a ticket folder.
+  Requires the session's working directory to contain `$TICKETS_ROOT` (launch
+  there or `/add-dir`). Resolution chain reordered: arguments → cwd → pointer →
+  ask; the old "cwd ≠ pointer → ask" friction is gone.
+
 ## [0.0.3] - 2026-08-28
 
 ### Changed
