@@ -15,7 +15,7 @@ Log new ticket activity into the timeline.
 ## Resolve the ticket
 
 - Follow `${CLAUDE_PLUGIN_ROOT}/references/resolve-ticket.md`: `$ARGUMENTS` >
-  current > cwd > ask; state which ticket and how.
+  cwd > ask; state which ticket and how.
 - `/log-updates` **writes** → run the mismatch guards before logging.
 - Resolve the folder once:
   ```bash

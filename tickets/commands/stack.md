@@ -52,8 +52,8 @@ explicit `license=<path>` → `$APIM_LICENSE` → `~/.gravitee/license.key` → 
    variant (`kafka`) / features (`prometheus`, `redis-rate-limit`, …). For a
    ticket-scoped action, resolve the ticket via
    `${CLAUDE_PLUGIN_ROOT}/references/resolve-ticket.md` (chain
-   **arguments > current > cwd > ask**; an explicit number is a one-off, doesn't move
-   the pointer).
+   **arguments > cwd > ask**; an explicit number is a one-off, doesn't move
+   the window).
    - **apim / am:** default the **instance to the ticket number**. Standalone (own
      testing, no ticket) → ask for an instance name; skip the write-guards and step 5.
    - **gamma:** singleton — no instance, no per-ticket scoping. Parse the version

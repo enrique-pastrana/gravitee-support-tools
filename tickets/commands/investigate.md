@@ -16,9 +16,9 @@ ask what to investigate.
 ## Steps
 
 1. **Resolve the ticket.** Follow `${CLAUDE_PLUGIN_ROOT}/references/resolve-ticket.md`,
-   chain **current > cwd > ask** (no `$ARGUMENTS` rung — that's the question).
+   chain **cwd > ask** (no `$ARGUMENTS` rung — that's the question).
    State which ticket and how. `/investigate` writes → run the write-guards:
-   cwd ≠ current · ticket doesn't exist → offer `/new-ticket` · content mismatch.
+   ticket doesn't exist → offer `/new-ticket` · content mismatch.
    Resolve the folder once:
    ```bash
    python3 "${CLAUDE_PLUGIN_ROOT}/scripts/ticket_paths.py" <number>

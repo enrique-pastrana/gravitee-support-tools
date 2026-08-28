@@ -219,10 +219,10 @@ A typical case, start to finish:
 | `/kb-publish [number]` | Merges the draft PR (closing the candidate Issue), indexes the article into the vectordb, and records the published URL on the ticket. | Once the draft PR is reviewed and approved. Needs `KB_REPO` set. |
 
 `[number]` is optional — the command resolves the ticket from what you're working
-on: an explicit number wins, otherwise it uses the **current ticket** (the one a
-command last set), then the ticket folder you're `cd`'d into, and only asks if it
-still can't tell. Give the number explicitly to act on a different ticket as a
-one-off. (For `/investigate`, the free text is your **question**, not the number —
+on: an explicit number wins, otherwise it uses the **ticket folder you're `cd`'d
+into** (the window's current ticket), and only asks if it can't tell. Say "let's
+work on `<number>`" to move the window into that ticket; give a number explicitly
+to act on a different ticket as a one-off. (For `/investigate`, the free text is your **question**, not the number —
 pass the number after it if you need to.)
 
 `/stack` is optional and needs the external
