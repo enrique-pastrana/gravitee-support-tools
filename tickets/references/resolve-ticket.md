@@ -5,27 +5,41 @@ deciding which — so all commands behave the same and none writes to the wrong
 ticket silently. Commands point here instead of repeating it. Paths assume
 `${CLAUDE_PLUGIN_ROOT}` (plugin) and `$TICKETS_ROOT` (data).
 
-## The current ticket
+## The current ticket = the window's working directory
 
-The one a command uses when no number is passed. A one-line pointer at
-`$TICKETS_ROOT/.current-ticket` (bare number) — so it persists across sessions
-and independently of the shell's cwd. Read/write it **only** through the helper,
-never by hand:
+Each window works on **one** ticket, and the signal for which one is the shell's
+**current directory**: when the shell sits inside a ticket's folder, that's the
+ticket this window is on. This is per-window by construction — two windows have
+two independent cwds, so working two tickets side by side never crosses wires.
+
+For this to hold, **the session's working directory must contain `$TICKETS_ROOT`**
+— launch the window from `$TICKETS_ROOT` (or from a ticket folder), or add it with
+`/add-dir`. Otherwise the sandbox resets the cwd out of the ticket folder after
+each command and the signal is lost.
+
+A one-line pointer at `$TICKETS_ROOT/.current-ticket` still exists as a
+**fallback** for the single-window case where the shell isn't in a ticket folder.
+It is **global** (one file for the whole workspace), so it is *not* safe for
+concurrent windows — cwd is what keeps windows apart. Read/write it only through
+the helper, never by hand:
 
 ```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/scripts/current_ticket.py" get          # print it, or nothing
-python3 "${CLAUDE_PLUGIN_ROOT}/scripts/current_ticket.py" set <number> # point at <number>
-python3 "${CLAUDE_PLUGIN_ROOT}/scripts/current_ticket.py" clear        # forget it
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/current_ticket.py" get    # print it, or nothing
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/current_ticket.py" clear  # forget it
 ```
 
 ## Resolution chain (first match wins)
 
 1. **`$ARGUMENTS`** — an explicit number always wins. It's a **one-off**: use it
-   for this run, but do **not** change the pointer (see guard 1).
-2. **Current ticket** — `current_ticket.py get`. Use it if set.
-3. **cwd** — if the shell sits in a ticket folder
-   (`$TICKETS_ROOT/<thousand>/<number>/`, e.g. `16000/16575/`, or flat
-   `$TICKETS_ROOT/<number>/` for alphanumeric ids), use that number.
+   for this run, but do **not** move the window (don't `cd`, don't touch the
+   pointer) — see guard 1.
+2. **cwd** — if the shell sits in a ticket folder
+   (`$TICKETS_ROOT/<thousand>/<number>/`, e.g. `18000/18180/`, or flat
+   `$TICKETS_ROOT/<number>/` for alphanumeric ids), use that number. This is the
+   normal per-window signal.
+3. **Current-ticket pointer** — `current_ticket.py get`. Fallback only, for a
+   single window not positioned in a ticket folder. Global/shared, so never rely
+   on it to tell two windows apart.
 4. **Ask** the user — no shortcuts. If nothing above matched, ask for the number;
    do **not** infer it from a "sole candidate" because the workspace happens to
    hold only one ticket. That heuristic silently breaks the moment a second ticket
@@ -38,21 +52,38 @@ python3 "${CLAUDE_PLUGIN_ROOT}/scripts/ticket_paths.py" <number>
 ```
 
 **Always state which ticket you resolved and how**, one line, before acting —
-`Ticket: 17337 (current)` / `(from arguments)` / `(from cwd)`. The visible line
-is what lets the user catch a wrong ticket at a glance; never act silently.
+`Ticket: 18180 (from cwd)` / `(from arguments)` / `(current pointer)`. The visible
+line is what lets the user catch a wrong ticket at a glance; never act silently.
+
+## Switching this window to a ticket
+
+When the user says they're working on a ticket ("let's work on 18180", "switch to
+16575", "trabajamos en el ticket 18180") — or when `/new-ticket` creates one —
+**move the window into that ticket's folder** so cwd carries the state:
+
+```bash
+cd "$(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/ticket_paths.py" <number>)"
+```
+
+- That ticket **has no folder yet** → don't `cd` into nothing: say so and offer to
+  create it (`/new-ticket <number>`).
+- If the `cd` gets reset (shell bounces back out of the folder), `$TICKETS_ROOT`
+  isn't a working directory of this session — tell the user to relaunch from
+  `$TICKETS_ROOT` or run `/add-dir "$TICKETS_ROOT"`, then retry.
+- Don't write the global pointer for this: it's shared across windows and would
+  defeat the per-window isolation. `cd` is the switch.
 
 ## Mismatch guards — check before you WRITE
 
 Read-only commands (`/status`) skip these. Writers (`/new-ticket`,
 `/log-updates`, `/reply`) must run them:
 
-- **Explicit ≠ current** — `$ARGUMENTS` differs from the current ticket. The
-  explicit number still wins, but **stop and get a yes** before writing: *"About
-  to write to `<args>`, but the current ticket is `<current>`. Continue?"* A real
-  gate, not a note you sail past — it matters most for `/log-updates`, which
-  otherwise writes with no natural pause. Don't move the pointer either way.
-- **cwd ≠ current** — shell is in one ticket's folder, pointer points elsewhere.
-  Don't guess — ask which one.
+- **Explicit ≠ cwd** — `$ARGUMENTS` names one ticket but the shell sits in a
+  different ticket's folder. The explicit number still wins for this run, but
+  **stop and get a yes** before writing: *"About to write to `<args>`, but this
+  window is in `<cwd-ticket>`. Continue?"* A real gate, not a note you sail past —
+  it matters most for `/log-updates`, which otherwise writes with no natural
+  pause. Don't move the window either way.
 - **Resolved ticket doesn't exist** — for commands needing an existing ticket
   (`/reply`, `/log-updates`, `/status`), if the folder's missing, stop and offer
   `/new-ticket <number>` instead of failing deep in a later step.
@@ -60,16 +91,3 @@ Read-only commands (`/status`) skip these. Writers (`/new-ticket`,
   material against `<dir>/metadata.json` (customer, subject, product). Clearly a
   different customer/ticket → stop and flag it, don't write it into the wrong
   timeline.
-
-## Setting the current ticket
-
-Write the pointer (`current_ticket.py set <number>`) when:
-
-- **`/new-ticket`** creates a ticket → set it.
-- the **user says they're working on a ticket** ("let's work on 17337", "switch
-  to 16575", "trabajamos en el ticket 17337") → set it.
-  - That ticket **has no folder yet** → don't point at nothing: say so and offer
-    to create it (`/new-ticket <number>`) or set the pointer anyway. User picks.
-
-Do **not** move the pointer just because a command got an explicit number
-(guard 1) — that's a one-off, not a switch.
