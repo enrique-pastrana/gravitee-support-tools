@@ -11,36 +11,22 @@ Each window works on **one** ticket, and the signal for which one is the shell's
 **current directory**: when the shell sits inside a ticket's folder, that's the
 ticket this window is on. This is per-window by construction — two windows have
 two independent cwds, so working two tickets side by side never crosses wires.
+There is no shared state file; the cwd *is* the state.
 
 For this to hold, **the session's working directory must contain `$TICKETS_ROOT`**
-— launch the window from `$TICKETS_ROOT` (or from a ticket folder), or add it with
-`/add-dir`. Otherwise the sandbox resets the cwd out of the ticket folder after
-each command and the signal is lost.
-
-A one-line pointer at `$TICKETS_ROOT/.current-ticket` still exists as a
-**fallback** for the single-window case where the shell isn't in a ticket folder.
-It is **global** (one file for the whole workspace), so it is *not* safe for
-concurrent windows — cwd is what keeps windows apart. Read/write it only through
-the helper, never by hand:
-
-```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/scripts/current_ticket.py" get    # print it, or nothing
-python3 "${CLAUDE_PLUGIN_ROOT}/scripts/current_ticket.py" clear  # forget it
-```
+— open the editor/workspace at `$TICKETS_ROOT`, launch the window from there, or
+add it with `/add-dir "$TICKETS_ROOT"`. Otherwise the sandbox resets the cwd out of
+the ticket folder after each command and the signal is lost.
 
 ## Resolution chain (first match wins)
 
 1. **`$ARGUMENTS`** — an explicit number always wins. It's a **one-off**: use it
-   for this run, but do **not** move the window (don't `cd`, don't touch the
-   pointer) — see guard 1.
+   for this run, but do **not** move the window (don't `cd`) — see guard 1.
 2. **cwd** — if the shell sits in a ticket folder
    (`$TICKETS_ROOT/<thousand>/<number>/`, e.g. `18000/18180/`, or flat
    `$TICKETS_ROOT/<number>/` for alphanumeric ids), use that number. This is the
    normal per-window signal.
-3. **Current-ticket pointer** — `current_ticket.py get`. Fallback only, for a
-   single window not positioned in a ticket folder. Global/shared, so never rely
-   on it to tell two windows apart.
-4. **Ask** the user — no shortcuts. If nothing above matched, ask for the number;
+3. **Ask** the user — no shortcuts. If neither above matched, ask for the number;
    do **not** infer it from a "sole candidate" because the workspace happens to
    hold only one ticket. That heuristic silently breaks the moment a second ticket
    exists, and it's exactly the kind of wrong-ticket guess this chain prevents.
@@ -52,8 +38,8 @@ python3 "${CLAUDE_PLUGIN_ROOT}/scripts/ticket_paths.py" <number>
 ```
 
 **Always state which ticket you resolved and how**, one line, before acting —
-`Ticket: 18180 (from cwd)` / `(from arguments)` / `(current pointer)`. The visible
-line is what lets the user catch a wrong ticket at a glance; never act silently.
+`Ticket: 18180 (from cwd)` / `(from arguments)`. The visible line is what lets the
+user catch a wrong ticket at a glance; never act silently.
 
 ## Switching this window to a ticket
 
@@ -68,10 +54,8 @@ cd "$(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/ticket_paths.py" <number>)"
 - That ticket **has no folder yet** → don't `cd` into nothing: say so and offer to
   create it (`/new-ticket <number>`).
 - If the `cd` gets reset (shell bounces back out of the folder), `$TICKETS_ROOT`
-  isn't a working directory of this session — tell the user to relaunch from
-  `$TICKETS_ROOT` or run `/add-dir "$TICKETS_ROOT"`, then retry.
-- Don't write the global pointer for this: it's shared across windows and would
-  defeat the per-window isolation. `cd` is the switch.
+  isn't a working directory of this session — tell the user to open the workspace
+  at `$TICKETS_ROOT` or run `/add-dir "$TICKETS_ROOT"`, then retry.
 
 ## Mismatch guards — check before you WRITE
 

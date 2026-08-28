@@ -23,7 +23,7 @@ an outward action: **confirm before creating it.**
    On any `✗` stop and relay it — no Issue without a working write path.
 
 2. **Resolve the ticket.** Per `${CLAUDE_PLUGIN_ROOT}/references/resolve-ticket.md`
-   (chain **arguments > current > cwd > ask**). `$ARGUMENTS` here is mostly the
+   (chain **arguments > cwd > ask**). `$ARGUMENTS` here is mostly the
    *reason*, not a number — treat a bare number in it as the ticket, the rest as
    the reason. State the resolved ticket in one line before writing.
 

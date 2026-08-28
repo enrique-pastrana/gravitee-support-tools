@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json) gets a matching entry
 > here, in the same PR — so the changelog never drifts from what shipped.
 
+## [0.0.5] - 2026-08-28
+
+### Removed
+- **The global current-ticket pointer is gone.** Now that each window resolves its
+  ticket from the shell's cwd (0.0.4), the `$TICKETS_ROOT/.current-ticket` file and
+  its `current_ticket.py` helper served no purpose — deleted, along with every
+  reference to them. The resolution chain across all commands is now simply
+  **arguments → cwd → ask** (or **cwd → ask** for `/investigate`, whose argument is
+  the question). Switching a window to a ticket is a plain `cd` into its folder.
+
+### Changed
+- Write-guards simplified: the old "cwd ≠ pointer" check is dropped; commands that
+  take an explicit ticket number still confirm when it differs from the cwd
+  ("explicit ≠ cwd").
+
 ## [0.0.4] - 2026-08-28
 
 ### Changed

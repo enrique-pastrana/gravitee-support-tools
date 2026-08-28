@@ -16,10 +16,10 @@ current ticket.
 ## Steps
 
 1. **Resolve the ticket.** Follow `${CLAUDE_PLUGIN_ROOT}/references/resolve-ticket.md`,
-   chain **arguments > current > cwd > ask** (an explicit number is a one-off — it
-   does **not** move the pointer). State which ticket and how. `/reproduce`
-   writes → run the write-guards: explicit ≠ current → confirm · cwd ≠ current →
-   ask · ticket doesn't exist → offer `/new-ticket` · content mismatch → flag.
+   chain **arguments > cwd > ask** (an explicit number is a one-off — it
+   does **not** move the window). State which ticket and how. `/reproduce`
+   writes → run the write-guards: explicit ≠ cwd → confirm · ticket doesn't
+   exist → offer `/new-ticket` · content mismatch → flag.
    Resolve the folder once:
    ```bash
    python3 "${CLAUDE_PLUGIN_ROOT}/scripts/ticket_paths.py" <number>

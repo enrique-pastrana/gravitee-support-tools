@@ -15,9 +15,9 @@ to what Zendesk shows.
 ## Steps
 
 1. **Resolve the ticket** — follow `${CLAUDE_PLUGIN_ROOT}/references/resolve-ticket.md`:
-   `$ARGUMENTS` > current ticket > cwd > ask; state which ticket you resolved and
-   how. `/close` **writes**, so run the mismatch guards (explicit ≠ current, cwd ≠
-   current, ticket doesn't exist) before writing. Resolve the folder once:
+   `$ARGUMENTS` > cwd > ask; state which ticket you resolved and
+   how. `/close` **writes**, so run the mismatch guards (explicit ≠ cwd,
+   ticket doesn't exist) before writing. Resolve the folder once:
    ```bash
    python3 "${CLAUDE_PLUGIN_ROOT}/scripts/ticket_paths.py" <number>
    ```

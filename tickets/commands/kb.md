@@ -18,7 +18,7 @@ PR is outward: **generate → show draft in chat → iterate → confirm, then o
    and relay it (no PR without a working write path).
 
 2. **Resolve the ticket** per `${CLAUDE_PLUGIN_ROOT}/references/resolve-ticket.md`
-   (chain **arguments > current > cwd > ask**; run the write-guards). `$ARGUMENTS`
+   (chain **arguments > cwd > ask**; run the write-guards). `$ARGUMENTS`
    is the **ticket number**. State it in one line.
 
 3. **Read `metadata.json` + `timeline.md`.** Require a candidate:
