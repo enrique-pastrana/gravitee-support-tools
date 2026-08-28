@@ -89,22 +89,24 @@ Start a new ticket.
    a long thread (many comments, big logs, attachments) doesn't bloat this session.
    That offloading is the whole point of the subagent.
    - **Announce, don't ask** — e.g. "Ticket has N comments; folding the rest into
-     the timeline via a subagent." (The baseline is already persisted:
+     the timeline via a background subagent." (The baseline is already persisted:
      `last_comment_id` = the opening comment id from step 4, so only comments
      **after** `[001]` get pulled — no overlap, no gap.)
-   - Launch **one** subagent (Agent tool, `general-purpose`) and **wait** for it
-     (`run_in_background: false` — the ticket should come back complete). Give it:
-     the ticket number `<number>`, and the **absolute** plugin root (the value of
-     `${CLAUDE_PLUGIN_ROOT}`) so its own shell finds the scripts. Instruct it to
-     **run `/log-updates` for `<number>` end to end** — invoke the
+   - Launch **one** subagent (Agent tool, `general-purpose`) **in the background**
+     (`run_in_background: true`) — **don't block**: a long thread can take a while,
+     and backgrounding keeps its churn out of this window (the point of offloading).
+     Give it: the ticket number `<number>`, and the **absolute** plugin root (the
+     value of `${CLAUDE_PLUGIN_ROOT}`) so its own shell finds the scripts. Instruct
+     it to **run `/log-updates` for `<number>` end to end** — invoke the
      `tickets:log-updates` skill, or follow
      `${CLAUDE_PLUGIN_ROOT}/commands/log-updates.md` — and, because the baseline is
      already set, to proceed **non-interactively** (no gap/backfill question is due
      here). It must return a **compact report only**: entries added (`[NNN]` + one
      line each) and the new `last_comment_id` — never echo verbatim thread content.
-   - When it returns, **relay** its one-line-per-entry summary. It already wrote the
-     entries, pulled their attachments, refreshed the exec summary and advanced the
-     cursor — don't redo any of that here.
+   - Then **carry on with the rest of this command** — don't wait. The subagent
+     writes the entries, pulls their attachments, refreshes the exec summary and
+     advances the cursor on its own. When its notification arrives, **relay** the
+     one-line-per-entry summary; don't redo any of that work here.
    - Subagent unavailable / errors out → fall back to telling the user to run
      `/log-updates` themselves.
 
@@ -120,8 +122,9 @@ Start a new ticket.
      `/investigate`'s job.
 
 10. **Finish** — print the ticket path and suggest a next step (`/investigate`,
-    `/reproduce`). The thread is already fully logged (step 8), so `/log-updates`
-    isn't the natural next move on a fresh open.
+    `/reproduce`). If step 8 launched the background fold-in, say it's still running
+    (its report lands via notification) and the timeline finishes populating on its
+    own — so `/log-updates` isn't the natural next move on a fresh open.
 
 ## Don'ts
 
