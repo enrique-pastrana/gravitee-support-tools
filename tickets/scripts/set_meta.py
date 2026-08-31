@@ -8,7 +8,8 @@ Values are coerced by the KIND of the field (per-key typing), never guessed
 from the value — so a version like "2.0" or "3.10" stays a string instead of
 being silently turned into a float. Kinds:
 
-    string   subject, customer, product, version, priority, ...
+    string   subject, customer, product, version, priority,
+             last_comment_at, ...
              stored verbatim; the literal "null" clears a nullable field.
     list     tags, related_tickets
              a JSON array (["a","b"]) or a comma-separated list (a,b,c);
@@ -44,11 +45,11 @@ NUMBER_KEYS = {"resolution_time_hours", "last_comment_id"}  # int/float, nullabl
 STRING_KEYS = {
     "ticket_id", "zendesk_url", "subject", "customer", "product", "version",
     "priority", "status", "opened_at", "updated_at", "resolved_at",
-    "kb_status", "kb_type", "kb_url", "kb_published_at",
+    "kb_status", "kb_type", "kb_url", "kb_published_at", "last_comment_at",
 }
 # Fields whose literal "null" means JSON null (clear the field).
 NULLABLE_KEYS = {
-    "resolved_at", "resolution_time_hours", "last_comment_id",
+    "resolved_at", "resolution_time_hours", "last_comment_id", "last_comment_at",
     "kb_issue", "kb_pr", "kb_status", "kb_type", "kb_url", "kb_published_at",
 }
 
