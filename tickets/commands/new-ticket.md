@@ -51,15 +51,19 @@ Start a new ticket.
      --set subject="…" --set customer="…" --set product="…" \
      --set version="…" --set priority="…" --set zendesk_url="…" \
      --set tags="tag1, tag2" \
-     --set opened_at=<created_at_date> --set last_comment_id=<opening_comment_id>
+     --set opened_at=<created_at_date> \
+     --set last_comment_at=<opening_comment_created_at> \
+     --set last_comment_id=<opening_comment_id>
    ```
    - Pass only fields you resolved; leave the rest at their `TBD`/`null`
      placeholders. Ask if unclear; don't invent. The helper types each field
      (so a version like `3.10` stays a string) and rejects unknown keys.
    - `opened_at` = Zendesk `created_at` (date, `YYYY-MM-DD`) — overwrites the
      placeholder `init_ticket` stamped.
-   - `last_comment_id` = opening comment id — the baseline `/log-updates` reads
-     to pull only what comes after.
+   - `last_comment_at` = the opening comment's full `created_at` (ISO, e.g.
+     `2026-08-27T14:32:11Z`) — the **cursor** `/log-updates` reads to pull only
+     comments created after it (time-based, so out-of-order comment ids can't
+     cause a skip). `last_comment_id` = the opening comment id, kept as a pointer.
 
 5. **Regenerate the header:**
    ```bash
@@ -94,8 +98,8 @@ Start a new ticket.
    That offloading is the whole point of the subagent.
    - **Announce, don't ask** — e.g. "Ticket has N comments; folding the rest into
      the timeline via a background subagent." (The baseline is already persisted:
-     `last_comment_id` = the opening comment id from step 4, so only comments
-     **after** `[001]` get pulled — no overlap, no gap.)
+     `last_comment_at` = the opening comment's `created_at` from step 4, so only
+     comments created **after** `[001]` get pulled — no overlap, no gap.)
    - Launch **one** subagent (Agent tool, `general-purpose`) **in the background**
      (`run_in_background: true`) — **don't block**: a long thread can take a while,
      and backgrounding keeps its churn out of this window (the point of offloading).
@@ -106,7 +110,7 @@ Start a new ticket.
      `${CLAUDE_PLUGIN_ROOT}/commands/log-updates.md` — and, because the baseline is
      already set, to proceed **non-interactively** (no gap/backfill question is due
      here). It must return a **compact report only**: entries added (`[NNN]` + one
-     line each) and the new `last_comment_id` — never echo verbatim thread content.
+     line each) and the new `last_comment_at` cursor — never echo verbatim thread content.
    - Then **carry on with the rest of this command** — don't wait. The subagent
      writes the entries, pulls their attachments, refreshes the exec summary and
      advances the cursor on its own. When its notification arrives, **relay** the

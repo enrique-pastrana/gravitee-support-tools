@@ -9,6 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json) gets a matching entry
 > here, in the same PR — so the changelog never drifts from what shipped.
 
+## [0.0.6] - 2026-08-31
+
+### Fixed
+- **`/log-updates` no longer skips comments with out-of-order ids.** The baseline
+  cursor was `last_comment_id` and selection assumed comment ids increase with
+  time — but Zendesk can mint a later comment (e.g. an auto-generated identity
+  card) with a *lower* id than an earlier one, so a strict id cursor would silently
+  skip it. Selection is now driven by the comment's `created_at` timestamp: a new
+  nullable `last_comment_at` field is the cursor, comments are selected/ordered by
+  time (not id), and a de-dup guard skips any comment id already footed in the
+  timeline. `last_comment_id` is kept as a human pointer. Older tickets migrate
+  transparently — the first run translates their `last_comment_id` to a timestamp
+  from the fetched thread.
+
+### Changed
+- `templates/metadata.json` gains `last_comment_at` (nullable); `set_meta.py` knows
+  it as a nullable string; `/new-ticket` seeds it from the opening comment's
+  `created_at`.
+
 ## [0.0.5] - 2026-08-28
 
 ### Removed

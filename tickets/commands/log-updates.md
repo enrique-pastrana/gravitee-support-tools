@@ -27,17 +27,26 @@ Log new ticket activity into the timeline.
 ## Steps
 
 1. **Find the baseline.**
-   - Read `<dir>/metadata.json`; note `last_comment_id` (newest Zendesk comment
-     already in the timeline).
-   - **Sanity-check vs the timeline:** scan `timeline.md` for `🔗 Zendesk comment
-     #<id>` footers, take the largest as the id actually logged.
-   - **On a gap** (`last_comment_id` set and **greater than** that largest logged
-     id): the in-between comments were never logged and step 3 would skip them.
-     Don't guess — tell the user how many fall in the gap and ask: (a) **backfill**
-     from the largest logged id, or (b) **trust the cursor**. Use the chosen id as
-     the step-3 baseline.
-   - Skip this check when the timeline has no numeric comment footers yet (fresh
-     adopt / paste-only history).
+   - Read `<dir>/metadata.json`; note `last_comment_at` — the **created-at
+     timestamp** of the newest Zendesk comment already in the timeline. This is
+     the cursor. Selection is by **time, not id**: Zendesk comment ids are *not*
+     reliably ordered by creation (an auto-generated identity card, say, can get a
+     lower id than an earlier message), so an id cursor would silently skip such a
+     comment. `last_comment_id` is kept alongside only as a human pointer.
+   - **Migration / older tickets:** if `last_comment_at` is absent or `null` but
+     `last_comment_id` is set, translate it once — after the fetch (step 2), find
+     that comment in the thread and use its `created_at` as the cursor. If the id
+     is no longer in the thread, fall back to the newest dated entry's timestamp
+     in `timeline.md`.
+   - **Sanity-check vs the timeline:** find the newest entry timestamp in
+     `timeline.md` (`### [NNN] YYYY-MM-DD HH:MM` headers).
+   - **On a gap** (cursor set and **later than** that newest logged entry): the
+     in-between comments were never logged and step 3 would skip them. Don't
+     guess — tell the user how many fall in the gap and ask: (a) **backfill** from
+     the newest logged entry's time, or (b) **trust the cursor**. Use the chosen
+     moment as the step-3 baseline.
+   - Skip this check when the timeline has no dated entries yet (fresh adopt /
+     paste-only history).
 
 2. **Fetch the thread from Zendesk.**
    - Call `zendesk` MCP `zendesk_get_ticket_with_attachments` for `<number>`
@@ -47,11 +56,16 @@ Log new ticket activity into the timeline.
      flow** below and stop the Zendesk steps.
 
 3. **Select what's new.**
-   - Keep only comments with id **greater than** the step-1 baseline (ids increase
-     over time). Process in chronological order.
-   - `last_comment_id` is `null` (older ticket / first run) → don't guess: list
-     comments briefly (id · date · author · one-line), ask which is the last one
-     already logged, treat everything after as new.
+   - Keep only comments whose **`created_at` is strictly later than** the step-1
+     baseline timestamp. Process in chronological (`created_at`) order — **never**
+     by id.
+   - **De-dup guard:** also skip any comment whose id already appears in a
+     `🔗 Zendesk comment #<id>` footer in `timeline.md` (covers the rare
+     same-second boundary and anything already logged out of band).
+   - Both `last_comment_at` and `last_comment_id` are `null` (older ticket / first
+     run) → don't guess: list comments briefly (id · date · author · one-line),
+     ask which is the last one already logged, treat everything created after it
+     as new.
    - Nothing new → say so in one line and stop; write nothing.
 
 4. **For each new comment, in order:**
@@ -82,12 +96,16 @@ Log new ticket activity into the timeline.
      - `🔗 Zendesk comment #<comment_id>` footer.
      - New entries go at the end of `## 🕐 Chronological timeline`.
 
-5. **Update the baseline** — one call, don't hand-edit the JSON:
+5. **Update the baseline** — one call, don't hand-edit the JSON. Advance both the
+   time cursor and the id pointer to the newest comment you processed:
    ```bash
-   python3 "${CLAUDE_PLUGIN_ROOT}/scripts/set_meta.py" <ticket> --set last_comment_id=<newest_processed_comment_id>
+   python3 "${CLAUDE_PLUGIN_ROOT}/scripts/set_meta.py" <ticket> \
+     --set last_comment_at=<newest_processed_created_at> \
+     --set last_comment_id=<newest_processed_comment_id>
    ```
-   Set it to the newest comment you processed. (`bump_entry` already refreshed
-   `updated_at`.)
+   "Newest" = the latest `created_at` among the comments you processed, **not** the
+   largest id. Use the full Zendesk `created_at` (ISO, e.g.
+   `2026-08-27T14:32:11Z`). (`bump_entry` already refreshed `updated_at`.)
 
 6. **Refresh the `## 📋 Executive summary`** of `timeline.md` only if the new
    activity changes the state of play (new symptom, customer confirmation,
@@ -106,7 +124,7 @@ Stack down, or content not in Zendesk yet:
 - Attachments via the manual path (`attach.py`) in the attachments reference.
 - Get `NNN` bump-first, append with the `Incoming update` snippet (no footer —
   write `🔗 Zendesk comment #—` or omit), refresh the summary if warranted.
-- Leave `last_comment_id` unchanged (we didn't read Zendesk).
+- Leave `last_comment_at` / `last_comment_id` unchanged (we didn't read Zendesk).
 
 ## Don'ts
 

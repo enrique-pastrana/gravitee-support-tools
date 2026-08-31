@@ -21,5 +21,6 @@
   "kb_url": null,
   "kb_published_at": null,
   "next_entry": 1,
-  "last_comment_id": null
+  "last_comment_id": null,
+  "last_comment_at": null
 }
