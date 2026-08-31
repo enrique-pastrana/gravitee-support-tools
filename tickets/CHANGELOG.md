@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json) gets a matching entry
 > here, in the same PR — so the changelog never drifts from what shipped.
 
+## [0.0.7] - 2026-08-31
+
+### Added
+- **`/version` reports the plugin version running in the current session.** Reads
+  the version from `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json` — the cache
+  Claude Code actually loaded for this session, not the source repo — and compares
+  it against the marketplace catalog (`highest installed` in the cache is shown
+  too). The verdict says whether you're on the latest and, when behind, prints the
+  exact update path (`/plugin marketplace update` → `/reload-plugins`); when ahead
+  of the catalog it flags the marketplace as stale. Read-only, no arguments. New
+  `commands/version.md` + `scripts/version.py`.
+
 ## [0.0.6] - 2026-08-31
 
 ### Fixed
