@@ -9,6 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json) gets a matching entry
 > here, in the same PR — so the changelog never drifts from what shipped.
 
+## [0.0.9] - 2026-08-31
+
+### Added
+- **Context-economy convention, codified in the plugin.** New shared reference
+  [`references/context-economy.md`](references/context-economy.md): delegate the
+  heavy, mechanical, high-payload work — fetching + parsing a large payload (a full
+  Zendesk thread, a Jira batch) or fanning out across sources (`rag_search`,
+  `zendesk_search_tickets`, `searchJiraIssuesUsingJql`, `gh search`) — to a
+  subagent that returns only a distilled digest, and never dump a big tool result
+  or file into the main context (parse it down with `grep`/`jq`/`Read` offsets
+  first). Reasoning and user-facing work stay **inline** — the diagnostic thinking
+  in `/investigate`, and drafting a reply *with* the user in `/reply`, are not
+  delegated. The six payload-heavy commands now point at it at their heavy step:
+  `/log-updates` (Zendesk fetch), `/investigate` and `/reproduce` (precedent
+  fan-out), `/kb` (anti-duplicate fan-out), `/status` and `/reply` (reading a large
+  `timeline.md`). Prompt-only; no script or behaviour-contract change.
+
 ## [0.0.8] - 2026-08-31
 
 ### Fixed

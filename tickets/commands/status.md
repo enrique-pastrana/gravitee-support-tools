@@ -18,7 +18,9 @@ at, not a report. This command is **read-only**: never modify any file.
    into the `TICKET-<id>` header; this standalone line is what lets the user
    catch a wrong ticket at a glance.
 2. **Read** `<ticket>/metadata.json` in full. For `timeline.md`, do **not**
-   read it end-to-end — it can be 30k+ tokens. Read only what you need:
+   read it end-to-end — it can be 30k+ tokens (the "never dump a big payload"
+   rule of `${CLAUDE_PLUGIN_ROOT}/references/context-economy.md`). Read only what
+   you need:
    - The `## 📋 Executive summary` section (state of play).
    - The **last entry** for the "Last entry" line — grab it cheaply:
      `grep -n "^### \[" <ticket>/timeline.md | tail -1` finds the last entry's

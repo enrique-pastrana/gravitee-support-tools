@@ -50,7 +50,11 @@ Log new ticket activity into the timeline.
 
 2. **Fetch the thread from Zendesk.**
    - Call `zendesk` MCP `zendesk_get_ticket_with_attachments` for `<number>`
-     (ticket + comments + attachment list, one call).
+     (ticket + comments + attachment list, one call). A long thread is a heavy
+     payload — delegate the fetch + digest to a subagent per
+     `${CLAUDE_PLUGIN_ROOT}/references/context-economy.md` (it returns the new
+     comments as `id · date · author · summary` + attachment names, not the raw
+     dump), then log those inline.
    - On error (connection/compose): stack likely down → tell the user to run
      `"${IA_TOOLING_ROOT}/bin/local-tooling" start`, then **fall back to the paste
      flow** below and stop the Zendesk steps.
