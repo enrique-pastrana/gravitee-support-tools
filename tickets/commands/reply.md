@@ -27,7 +27,10 @@ You are drafting an outbound reply to the customer and logging it in the timelin
      exchange. Find them with `grep -nE "^### \[" timeline.md`, then `Read` from
      the N-th-from-last header onward.
    Read further back only if the summary or recent entries point at an earlier
-   finding (a reproduction, a root cause) you actually need to quote.
+   finding (a reproduction, a root cause) you actually need to quote. This is the
+   "never dump a big payload" rule of
+   `${CLAUDE_PLUGIN_ROOT}/references/context-economy.md`; the drafting in steps
+   4–7 stays **inline** — it happens with the user, don't delegate it.
 
 3. **Ask the user** (in chat, not the file), skipping anything obvious from the
    timeline:

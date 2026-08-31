@@ -31,6 +31,9 @@ ask what to investigate.
    connect, the stack/env is likely down — tell the user to run `/tickets-up`
    (it diagnoses a missing `IA_TOOLING_ROOT`), then continue with what you have.
    Query mechanics + scoring → `${CLAUDE_PLUGIN_ROOT}/references/search-precedents.md`.
+   A multi-source fan-out is heavy — delegate the searches to a subagent that
+   returns only the relevant hits (`${CLAUDE_PLUGIN_ROOT}/references/context-economy.md`);
+   keep the reasoning in step 3 inline.
 
    | source | tool | use when | skip when |
    |---|---|---|---|

@@ -30,7 +30,9 @@ current ticket.
    Query by literals per `${CLAUDE_PLUGIN_ROOT}/references/search-precedents.md`
    (`rag_search` per literal; Zendesk / Jira for cases handled elsewhere). Cite
    each source; skip if MCP is down or the repro is obviously novel. Offer to
-   reuse what you find — never copy it in silently.
+   reuse what you find — never copy it in silently. A multi-source fan-out is
+   heavy — delegate the searches to a subagent that returns only the relevant
+   hits (`${CLAUDE_PLUGIN_ROOT}/references/context-economy.md`).
 
 3. **Create or open `reproduction/`.**
    - **Doesn't exist** → create the scaffold:

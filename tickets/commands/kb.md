@@ -30,7 +30,10 @@ PR is outward: **generate → show draft in chat → iterate → confirm, then o
 4. **Anti-duplicate** (discipline: `${CLAUDE_PLUGIN_ROOT}/references/search-precedents.md`):
    `gh search code --repo "$KB_REPO"` in `articles/` (or the read-only MCP), open
    `kb:draft` PRs (`gh pr list --label kb:draft`), and `rag_search`. If something
-   covers it, **stop**, link it, offer to extend rather than duplicate.
+   covers it, **stop**, link it, offer to extend rather than duplicate. This is a
+   fan-out — delegate the three searches to a subagent that returns only whether
+   a match exists + its link (`${CLAUDE_PLUGIN_ROOT}/references/context-economy.md`);
+   generating + iterating the article (steps 6–8) stays **inline** with the user.
 
 5. **Confirm it's KB-worthy** (one sentence: yes/no + why — reproducible cause,
    non-trivial reusable fix, not a one-off config).
