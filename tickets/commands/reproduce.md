@@ -38,8 +38,10 @@ current ticket.
      python3 "${CLAUDE_PLUGIN_ROOT}/scripts/init_reproduction.py" <number>
      ```
      Makes `reproduction/{steps.md,environment.md,configs/,results/}`, rendering
-     `steps.md`/`environment.md` from `metadata.json` (subject, product, version,
-     engineer, date). Refuses to overwrite an existing folder.
+     `steps.md`/`environment.md` from `metadata.json` (subject, product,
+     version) plus the **engineer** (`$TICKETS_ENGINEER`, else your OS login)
+     and **today's date** — those two are not in the metadata. Refuses to
+     overwrite an existing folder.
    - **Exists** → read `reproduction/steps.md` to know where to append.
 
 4. **Ask what to log now** — the user picks; don't assume:

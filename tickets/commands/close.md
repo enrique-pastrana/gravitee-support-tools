@@ -22,12 +22,27 @@ to what Zendesk shows.
    python3 "${CLAUDE_PLUGIN_ROOT}/scripts/ticket_paths.py" <number>
    ```
 
-2. **Already closed? Stop before writing anything.** Read `metadata.json`; if its
-   `status` is already `resolved` or `closed`, this ticket is closed — say so
-   (with `resolved_at`) and **stop**. Do **not** bump, append an entry, or
-   re-stamp: a second pass would leave a duplicate closing entry. Re-close only
-   if the user **explicitly** asks to; only then continue and add `--force` to
-   the `close_meta.py` call in step 5.
+2. **Already terminal? Check it's fully stamped before writing.** Read
+   `metadata.json` and branch on `status` + `resolved_at`:
+   - **Terminal (`resolved`/`closed`) and `resolved_at` set** → already closed:
+     say so (with `resolved_at`) and **stop**. Do **not** bump, append an entry,
+     or re-stamp — a second pass duplicates the closing entry. Re-close only if
+     the user **explicitly** asks; only then continue and add `--force` to the
+     `close_meta.py` call in step 6.
+   - **Terminal but `resolved_at` missing/`null`** → an *incomplete* close: the
+     status was moved outside `/close` (e.g. `/log-updates` syncing status), so
+     the timestamp was never stamped. **Backfill only — don't bump or append an
+     entry** (the closing entry already exists). Derive the real resolution
+     moment from the newest timeline entry (the closing/confirmation entry), or
+     the Zendesk solved time from step 3, and run:
+     ```bash
+     python3 "${CLAUDE_PLUGIN_ROOT}/scripts/close_meta.py" <number> --stamp-only --resolved-at <ISO>
+     python3 "${CLAUDE_PLUGIN_ROOT}/scripts/render_header.py" <number>
+     ```
+     Then **stop**. (Verify with step 3 first that Zendesk really shows it
+     terminal; if it doesn't, treat it as the status-drift case below, not a
+     backfill.)
+   - **Not terminal** → a normal close: continue.
 
 3. **Read the Zendesk terminal status** — the source of truth for whether this
    ticket is really done. Call the Zendesk MCP (`zendesk_get_ticket_with_attachments`,

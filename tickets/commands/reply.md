@@ -34,6 +34,10 @@ You are drafting an outbound reply to the customer and logging it in the timelin
    - tone: standard / formal / more direct?
    - points to emphasise or omit?
    - if a fix is involved: validated locally, or proposed without reproduction?
+   - **Check the previous outbound entry.** If it already asked the customer for
+     something they haven't answered yet, don't repeat the same request —
+     build on it (a nudge, or new information), or confirm with the user that a
+     re-ask is intended.
 
 4. **Write the draft** in English, ready to paste into Zendesk:
    - Greeting (no first names unless the timeline shows them).
@@ -62,9 +66,11 @@ You are drafting an outbound reply to the customer and logging it in the timelin
    inside as a blockquote.
 
 9. **Update state — only if the reply changed it**; otherwise skip both parts.
-   - **Status.** If the reply moves the case (asked the customer for info →
-     `pending`/`waiting`; confirmed resolution → `resolved`), confirm the new
-     value with the user, then write it — don't hand-edit the JSON or header:
+   - **Status.** If the reply moves the case, confirm the new value with the
+     user, then write it — don't hand-edit the JSON or header. Which value:
+     asked the customer for info → **`waiting`** (the ball is in their court);
+     still owe an action on our side → **`pending`**; confirmed resolution →
+     `resolved`.
      ```bash
      python3 "${CLAUDE_PLUGIN_ROOT}/scripts/set_meta.py" <number> --set status=<status>
      python3 "${CLAUDE_PLUGIN_ROOT}/scripts/render_header.py" <number>
