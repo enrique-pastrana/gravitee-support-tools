@@ -4,6 +4,7 @@
 Usage:
     close_meta.py <ticket-number> [--status resolved|closed]
                   [--resolved-at ISO8601] [--kb-candidate] [--force]
+    close_meta.py <ticket-number> --stamp-only [--resolved-at ISO8601]
 
 The one deterministic write for closing a ticket, so the model never hand-edits
 JSON nor hand-computes the elapsed time. In a single atomic write it:
@@ -23,6 +24,14 @@ JSON nor hand-computes the elapsed time. In a single atomic write it:
 Refuses if metadata.json is missing/invalid, or if status is already terminal
 (resolved/closed) unless --force. Re-render the timeline header afterwards with
 render_header.py so the header, /status and the metadata never drift.
+
+--stamp-only backfills a half-closed ticket: one whose status was moved to a
+terminal value outside /close (e.g. by /log-updates) so resolved_at was never
+stamped. It writes resolved_at + resolution_time_hours only, leaving status,
+updated_at and everything else untouched, and adds no timeline entry. It needs an
+already-terminal ticket and is a no-op if resolved_at is already set. Pass the
+real resolution moment with --resolved-at (the closing entry's time / the Zendesk
+solved time) so resolution_time_hours is accurate.
 """
 from __future__ import annotations
 
@@ -69,6 +78,10 @@ def main() -> int:
                    help="Mark kb_candidate=true (never downgrades a prior true).")
     p.add_argument("--force", action="store_true",
                    help="Close even if already resolved/closed.")
+    p.add_argument("--stamp-only", action="store_true",
+                   help="Backfill resolved_at/resolution_time_hours on an "
+                        "already-terminal ticket whose resolved_at is missing; "
+                        "leaves status/updated_at untouched, adds no entry.")
     args = p.parse_args()
 
     resolved_at = args.resolved_at or datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
@@ -83,8 +96,20 @@ def main() -> int:
         print(f"error: {meta_path} not valid JSON: {exc}", file=sys.stderr)
         return 1
 
-    if meta.get("status") in TERMINAL_STATUSES and not args.force:
-        print(f"{args.ticket}: already {meta['status']}, skipped "
+    status_now = meta.get("status")
+
+    if args.stamp_only:
+        if status_now not in TERMINAL_STATUSES:
+            print(f"error: --stamp-only needs an already-terminal ticket; "
+                  f"{args.ticket} is {status_now!r} — run a normal close instead",
+                  file=sys.stderr)
+            return 1
+        if meta.get("resolved_at"):
+            print(f"{args.ticket}: resolved_at already set "
+                  f"({meta['resolved_at']}); nothing to backfill")
+            return 0
+    elif status_now in TERMINAL_STATUSES and not args.force:
+        print(f"{args.ticket}: already {status_now}, skipped "
               "(pass --force to re-close)")
         return 0
 
@@ -107,12 +132,13 @@ def main() -> int:
             delta_hours = 0
         hours = delta_hours
 
-    meta["status"] = args.status
     meta["resolved_at"] = resolved_at
     meta["resolution_time_hours"] = hours
-    meta["updated_at"] = resolved_at
-    if args.kb_candidate:
-        meta["kb_candidate"] = True
+    if not args.stamp_only:
+        meta["status"] = args.status
+        meta["updated_at"] = resolved_at
+        if args.kb_candidate:
+            meta["kb_candidate"] = True
 
     rendered = json.dumps(meta, indent=2, ensure_ascii=False) + "\n"
     json.loads(rendered)  # sanity check before committing
@@ -121,8 +147,13 @@ def main() -> int:
     os.replace(tmp, meta_path)
 
     hours_str = "null" if hours is None else f"{hours}h"
-    print(f"{args.ticket}: {args.status} "
-          f"(resolved_at={resolved_at}, resolution_time_hours={hours_str})")
+    if args.stamp_only:
+        print(f"{args.ticket}: backfilled resolved_at={resolved_at}, "
+              f"resolution_time_hours={hours_str} "
+              f"(status {status_now} unchanged)")
+    else:
+        print(f"{args.ticket}: {args.status} "
+              f"(resolved_at={resolved_at}, resolution_time_hours={hours_str})")
     return 0
 
 

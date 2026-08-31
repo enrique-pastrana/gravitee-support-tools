@@ -9,6 +9,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json) gets a matching entry
 > here, in the same PR — so the changelog never drifts from what shipped.
 
+## [0.0.8] - 2026-08-31
+
+### Fixed
+- **`/close` can now backfill a half-closed ticket instead of refusing it.** When a
+  ticket's `status` was moved to a terminal value outside `/close` — e.g.
+  `/log-updates` syncing status from Zendesk — `resolved_at` and
+  `resolution_time_hours` were never stamped (only `close_meta.py` writes them), yet
+  the step-2 guard treated the ticket as already closed and stopped. Such tickets
+  were stuck with `resolved_at: null` and no clean way to fix it. `close_meta.py`
+  gains **`--stamp-only`**: it backfills `resolved_at` + `resolution_time_hours` on
+  an already-terminal ticket without touching `status`/`updated_at` and without
+  adding a timeline entry — idempotent (no-op if `resolved_at` is already set) and
+  refuses a non-terminal ticket. `close.md` step 2 now branches: terminal +
+  stamped → stop; terminal + missing `resolved_at` → backfill via `--stamp-only`;
+  not terminal → normal close.
+- **`/reproduce` evidence filenames match the documented convention.** The
+  `reproduction-steps.md` template hardcoded `results/before_fix.png` /
+  `after_fix.png`, diverging from step 5's `results/NNN_<short>.<ext>` rule (NNN =
+  the linked timeline entry). Template now uses `results/NNN_before.png` /
+  `NNN_after.png` and carries a comment stating the convention.
+- **`/reproduce` docs corrected.** `reproduce.md` said `steps.md`/`environment.md`
+  render `engineer` and `date` from `metadata.json`; they don't — `engineer` comes
+  from `$TICKETS_ENGINEER` (else the OS login) and `date` is today. Wording fixed.
+
+### Changed
+- **Reproduction templates are no longer stack/docker-only.** `reproduction-steps.md`
+  and `reproduction-environment.md` now cover both a stack-based repro and a
+  **browser/UI repro with no stack** (URL, browser + version, viewport/resolution),
+  so a pure front-end/CSS reproduction isn't forced through dead docker boilerplate.
+  `docker-compose` → `docker compose`.
+- **`/reply` prompt guidance sharpened.** Step 3 now tells the drafter to check the
+  previous outbound entry and not repeat a request the customer hasn't answered yet;
+  step 9 clarifies the status choice — asked the customer for info → `waiting`; an
+  action still pending on our side → `pending`; confirmed resolution → `resolved`.
+
 ## [0.0.7] - 2026-08-31
 
 ### Added

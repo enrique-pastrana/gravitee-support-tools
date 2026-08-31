@@ -12,7 +12,11 @@ See [environment.md](environment.md) for the full setup.
 
 **Summary:**
 - Product / version: {{product}} {{version}}
-- (Add stack, DB, OS, resources…)
+- Stack repro → (stack, DB, OS, resources…) · Browser/UI repro → (URL, browser +
+  version, viewport/resolution)
+
+<!-- Name evidence files results/<NNN>_<short>.<ext>, where <NNN> is the timeline
+     entry this repro is logged under (see /reproduce step 5). -->
 
 ---
 
@@ -26,7 +30,7 @@ See [environment.md](environment.md) for the full setup.
 
 **Result:**
 - (what happened)
-- Evidence: [results/before_fix.png](results/before_fix.png)
+- Evidence: [results/NNN_before.png](results/NNN_before.png)
 
 ### 2. (second step)
 
@@ -58,7 +62,7 @@ See [environment.md](environment.md) for the full setup.
 ```
 
 **Result:**
-- Evidence: [results/after_fix.png](results/after_fix.png)
+- Evidence: [results/NNN_after.png](results/NNN_after.png)
 
 ---
 
@@ -72,13 +76,16 @@ See [environment.md](environment.md) for the full setup.
 
 ## Quick-start (for the team)
 
+**Stack-based repro:**
+
 ```bash
 # 1. Use these configs
 cp reproduction/configs/* .
-
 # 2. Bring up
-docker-compose up -d
-
-# 3. Reproduce
-# (the exact command)
+docker compose up -d
+# 3. Reproduce — the exact command
 ```
+
+**Browser / UI repro (no stack):** open `<URL>` in `<browser + version>` at
+`<viewport/resolution>`, then follow the steps above and capture the result in
+`results/`.
