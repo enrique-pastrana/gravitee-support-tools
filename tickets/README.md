@@ -212,6 +212,11 @@ Commands available so far:
 - **`/status [number]`** — print a concise summary of a ticket (state, entry
   count, attachments, last entry). Read-only; infers the ticket from the current
   directory if no number is given.
+- **`/sync [number]`** — reconcile local ticket folders against **live Zendesk**
+  (the source of truth) and report the drift, sorted by severity: closed in
+  Zendesk but active locally, new Zendesk activity not yet logged, and
+  metadata mismatches. With no number it sweeps the whole active queue. Strictly
+  read-only — it suggests the fix (`/close`, `/log-updates`) but never applies it.
 - **`/kb-candidate [reason] [number]`** — flag a ticket as worth a KB article
   (mid-flow, before it's written). Opens a tracking **Issue** in `KB_REPO`
   labeled `kb:candidate`, records `kb_status`/`kb_issue` on the ticket, and notes
