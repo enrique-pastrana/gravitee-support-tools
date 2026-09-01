@@ -47,7 +47,9 @@ current ticket.
    - **Exists** → read `reproduction/steps.md` to know where to append.
 
 4. **Ask what to log now** — the user picks; don't assume:
-   - environment setup, · a new step, · a result (screenshot/log) to attach,
+   - environment setup, · a new step, · a result (screenshot/log) to attach
+     (for a cloud case, `grafana_query`/`grafana_logs_link` can pull a live
+     metric or a Loki Logs Drilldown link to record here — read-only, opt-in),
    - the outcome (✅ reproduced / ❌ not), · applying the fix and re-testing.
 
 5. **Write his input into the right place** — format only, invent nothing:

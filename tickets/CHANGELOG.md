@@ -9,6 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json) gets a matching entry
 > here, in the same PR — so the changelog never drifts from what shipped.
 
+## [0.0.10] - 2026-09-01
+
+### Added
+- **Read-only Grafana MCP wired in.** `ia-tooling` now exposes a `grafana` server
+  through `local-tooling mcp grafana` (`grafana_health`, `grafana_list_datasources`,
+  `grafana_query`, `grafana_logs_link` — dashboard/metric reads plus Loki "Logs
+  Drilldown" deep-links for a customer's namespace/service). The plugin declares it
+  in [`.mcp.json`](.mcp.json) as `grafana-mcp-server`, using the same
+  `${IA_TOOLING_ROOT}/bin/local-tooling` pattern as `github-mcp-server`,
+  `atlassian-mcp-server` and `kapa`. It is opt-in on the `ia-tooling` side
+  (`GRAFANA_ENABLED=true` + `GRAFANA_BASE_URL`/`GRAFANA_TOKEN`); when disabled or
+  unconfigured it simply fails to start, like any other server, without affecting the
+  rest. `/investigate` gains a **Grafana** row in its source table (a live metric via
+  `grafana_query`, or a Loki Logs Drilldown link via `grafana_logs_link`), and
+  `/reproduce` can pull a live metric/log link when recording a result. README,
+  getting-started and PORTING updated to match. Prompt/config only; no script change.
+
 ## [0.0.9] - 2026-08-31
 
 ### Added

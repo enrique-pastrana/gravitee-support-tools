@@ -72,7 +72,7 @@ few environment variables. Here's the whole list:
 
 | Variable | Required? | What it points to | Default |
 |---|---|---|---|
-| `IA_TOOLING_ROOT` | **Required** | Your `ia-tooling` checkout — how the plugin reaches Zendesk, search and the vector DB. | — |
+| `IA_TOOLING_ROOT` | **Required** | Your `ia-tooling` checkout — how the plugin reaches Zendesk, search, the vector DB and (read-only) Grafana. | — |
 | `TICKETS_ROOT` | Optional | Where your ticket folders are created and stored. | `~/TICKETS` |
 | `KB_REPO` | Optional* | Your knowledge-base GitHub repo, as `owner/name`. | — |
 | `IA_TOOLING_ENV` | Optional | Your `ia-tooling` `.env` file, only if it isn't at the default place. | `$IA_TOOLING_ROOT/.env` |
@@ -208,7 +208,7 @@ A typical case, start to finish:
 | `/tickets-up` | Starts and verifies the `ia-tooling` stack. | First thing each session, or whenever a command says the stack is down. |
 | `/new-ticket <number>` | Creates the ticket folder, fills it from Zendesk, logs the opening message, finds similar tickets. | When you pick up a new ticket. |
 | `/log-updates [number]` | Pulls new Zendesk activity (customer messages, replies, internal notes) into the timeline as summarised entries, with attachments. | Whenever there's new activity on the ticket. |
-| `/investigate <question> [number]` | Answers a question grounded in the case (past tickets, Jira, docs), iterates in chat, logs the Q&A as a 🔍 entry. | While digging into the cause of the problem. |
+| `/investigate <question> [number]` | Answers a question grounded in the case (past tickets, Jira, docs, live Grafana metrics/logs), iterates in chat, logs the Q&A as a 🔍 entry. | While digging into the cause of the problem. |
 | `/reproduce [number]` | Scaffolds a `reproduction/` folder and logs a 🧪 milestone (reproduced / not reproduced). | When you try to reproduce the reported bug. |
 | `/stack <up\|list\|down\|clean> [apim\|am\|gamma][@version] [number]` | Spins up / lists / tears down a local Gravitee stack — standalone APIM/AM (per-ticket, via `gravitee-stacker`) or the version-selectable Gamma singleton (via its official docker-compose) — scoped to the ticket and logged as a 🛠️ entry. | When you need a live environment to reproduce or test against. |
 | `/reply [number]` | Drafts an outbound reply, iterates with you in chat, and logs it only on your confirmation. | When it's time to answer the customer. |
