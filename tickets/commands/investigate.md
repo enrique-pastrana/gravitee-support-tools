@@ -41,6 +41,7 @@ ask what to investigate.
    | Zendesk (live, read-only) | `zendesk_search_tickets` | a case another engineer handled, not mirrored locally | — |
    | Jira (live) | `searchJiraIssuesUsingJql` — `text ~ "<error>" ORDER BY updated DESC` | already-reported bugs / escalations (APIM-XXXXX / AM-XXXX) | — |
    | Code | vectordb (indexed AM/APIM repos) or `search_code` (freshness / non-indexed) | **only** a concrete error/exception to trace | conceptual Qs, no error string |
+   | Grafana (live, read-only) | `grafana_query` (a metric/dashboard value) · `grafana_logs_link` (a Loki Logs Drilldown deep-link for the customer's namespace/service) | a live metric or a jumping-off log link is needed to ground the answer | no cloud/observability angle; opt-in, may be disabled |
 
 3. **Answer** with `Read` (ticket files), `Bash` (`grep`/`find`), `WebFetch`
    (only if the user points at a URL). Stay grounded — **never invent ticket

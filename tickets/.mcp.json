@@ -31,6 +31,10 @@
       "command": "${IA_TOOLING_ROOT}/bin/local-tooling",
       "args": ["mcp", "kapa"]
     },
+    "grafana-mcp-server": {
+      "command": "${IA_TOOLING_ROOT}/bin/local-tooling",
+      "args": ["mcp", "grafana"]
+    },
     "gravitee-stacker": {
       "command": "${GRAVITEE_STACKER_BIN}",
       "args": []

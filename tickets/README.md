@@ -235,7 +235,7 @@ Commands available so far:
 
 The plugin talks to the `ia-tooling` (`gravitee-local-tooling`) stack through the
 MCP servers it declares in `.mcp.json`: `zendesk`, `vectordb`, `github-mcp-server`,
-`atlassian-mcp-server` and `kapa`.
+`atlassian-mcp-server`, `grafana-mcp-server` and `kapa`.
 
 Those servers live **outside** the plugin — they are your own local `ia-tooling`
 checkout — so the plugin cannot know where it sits. It locates it through a single
@@ -252,10 +252,15 @@ to start. The plugin ships **no absolute paths** of its own — its bundled scri
 are referenced with `${CLAUDE_PLUGIN_ROOT}`, which Claude Code fills in
 automatically.
 
+`grafana-mcp-server` is read-only — it queries dashboards/metrics and emits Loki
+"Logs Drilldown" deep-links for a customer's namespace/service. It is opt-in on the
+`ia-tooling` side (`GRAFANA_ENABLED=true` + `GRAFANA_BASE_URL`/`GRAFANA_TOKEN`); when
+disabled or unconfigured it simply fails to start, like any other server, without
+affecting the rest.
+
 Two deliberate omissions:
 
 - **`fathom`** is not declared here — it belongs to the `p1-updates` plugin.
-- **`grafana`** is parked for now.
 - **`kapa`** is declared but currently fails to start on a known, unrelated
   `ia-tooling` issue (a global `kapa` MCP fails the same way). It is not used yet.
 

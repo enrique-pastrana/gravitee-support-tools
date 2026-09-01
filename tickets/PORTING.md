@@ -51,11 +51,12 @@ hardcoded prefix with a single per-user environment variable
 once in their shell (`export IA_TOOLING_ROOT="$HOME/ia-tooling"`). No absolute
 path lives in the repo. Scoped down for now:
 
-- **5 servers** ported: `zendesk`, `vectordb`, `github-mcp-server`,
-  `atlassian-mcp-server`, `kapa`. Only `zendesk` (env-file) and the three
-  `local-tooling` commands carried a path; `vectordb` had none.
+- **6 servers** ported: `zendesk`, `vectordb`, `github-mcp-server`,
+  `atlassian-mcp-server`, `kapa`, `grafana-mcp-server`. Only `zendesk` (env-file)
+  and the four `local-tooling` commands carried a path; `vectordb` had none.
 - **`fathom` dropped** here — already shipped in `p1-updates`.
-- **`grafana` parked** for now.
+- **`grafana-mcp-server` added** (read-only) once `ia-tooling` exposed it via
+  `local-tooling mcp grafana` — see the 2026-09-01 progress-log entry.
 
 **Verified** in the clean `sandbox/` via `claude --plugin-dir ../gravitee-support-tools/tickets`:
 `/mcp` showed all servers prefixed `plugin:tickets:` (proving the plugin, not
@@ -314,3 +315,14 @@ scheduled:
   (default branch `main`, `Accept: raw` returns file body). Destructive e2e (real
   `gh pr merge` + real ingest) deliberately deferred with the user to a real-ticket
   run once the slice is complete.
+
+- **2026-09-01** — Branch `feat/grafana-mcp`. `ia-tooling` now exposes a
+  read-only **grafana** MCP via `local-tooling mcp grafana` (commit `722831e`:
+  `grafana_health`, `grafana_list_datasources`, `grafana_query`, `grafana_logs_link`
+  — dashboard/metric reads + Loki "Logs Drilldown" deep-links). Declared it in
+  `.mcp.json` as `grafana-mcp-server` (same `${IA_TOOLING_ROOT}/bin/local-tooling`
+  pattern as github/atlassian/kapa; opt-in on the `ia-tooling` side via
+  `GRAFANA_ENABLED`+`GRAFANA_BASE_URL`/`GRAFANA_TOKEN`). Wired it into `/investigate`
+  (new Grafana row in the source table) and `/reproduce` (optional live metric/log
+  link when recording a result); refreshed README (server list + dropped the
+  "grafana parked" omission) and getting-started. 0.0.10 + CHANGELOG.
