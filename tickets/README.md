@@ -217,6 +217,10 @@ Commands available so far:
   Zendesk but active locally, new Zendesk activity not yet logged, and
   metadata mismatches. With no number it sweeps the whole active queue. Strictly
   read-only — it suggests the fix (`/close`, `/log-updates`) but never applies it.
+- **`/remove-ticket <number>`** — delete a ticket folder entirely (`rm -rf`) from
+  `$TICKETS_ROOT`. Shows a recap (subject, customer, status, entry/attachment
+  counts, contents) and requires an explicit confirmation before deleting.
+  **Destructive and irreversible**; refuses any path outside `$TICKETS_ROOT`.
 - **`/kb-candidate [reason] [number]`** — flag a ticket as worth a KB article
   (mid-flow, before it's written). Opens a tracking **Issue** in `KB_REPO`
   labeled `kb:candidate`, records `kb_status`/`kb_issue` on the ticket, and notes
