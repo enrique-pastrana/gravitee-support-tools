@@ -9,6 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json) gets a matching entry
 > here, in the same PR — so the changelog never drifts from what shipped.
 
+## [0.0.12] - 2026-09-01
+
+### Added
+- **`/remove-ticket` command — delete a ticket folder (destructive).** Ported from the
+  standalone `~/TICKETS` workspace. Resolves the ticket (via the shared
+  `references/resolve-ticket.md` chain, `$ARGUMENTS` > cwd > ask), resolves the folder
+  through `ticket_paths.py` (thousand-bucket aware), shows a **recap** of what will be
+  deleted (subject / customer / status from metadata, entry count, attachment count,
+  raw `ls -la`), then requires an explicit **AskUserQuestion** confirmation before
+  `rm -rf`-ing the resolved path. A **safety guard** refuses to delete `$TICKETS_ROOT`
+  itself, a bare thousand-bucket, or any path resolving outside `$TICKETS_ROOT`. On
+  confirmation, if the shell's cwd was inside the deleted folder it `cd`s back to
+  `$TICKETS_ROOT` so the window isn't stranded (the current-ticket signal is the cwd
+  since 0.0.5), and the empty thousand-bucket is left in place. Prompt-only; new
+  [`commands/remove-ticket.md`](commands/remove-ticket.md); README and getting-started
+  updated.
+
 ## [0.0.11] - 2026-09-01
 
 ### Added

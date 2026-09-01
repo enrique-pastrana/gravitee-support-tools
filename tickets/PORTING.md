@@ -341,3 +341,18 @@ scheduled:
   `references/context-economy.md`. Read-only → no A/B/C recipe, no status writes.
   New `commands/sync.md`; README + getting-started rows; 0.0.11 + CHANGELOG.
   `plugin validate --strict` ✔. Live-test pending in a real ticket env.
+
+- **2026-09-01** — Branch `port-remove-ticket`. Ported **`/remove-ticket`** from
+  `~/TICKETS` — a destructive `rm -rf` of a ticket folder, gated behind an explicit
+  confirmation. Resolve via the shared `references/resolve-ticket.md` chain
+  (`$ARGUMENTS` > cwd > ask; a destructive delete asks when nothing resolves, never
+  guesses) → `ticket_paths.py` for the folder → **safety guard** (refuse
+  `$TICKETS_ROOT`, a bare thousand-bucket, or any path outside `$TICKETS_ROOT`) →
+  **recap** (subject/customer/status from metadata, entry + attachment counts, `ls
+  -la`) → **AskUserQuestion** confirm → `rm -rf` the resolved path. Adaptations from
+  src: `~/TICKETS/_system/scripts` import → the plugin's `ticket_paths.py` CLI;
+  hardcoded `/TICKETS/` → `$TICKETS_ROOT`; added the richer recap and, since the
+  current-ticket signal is now the cwd (0.0.5), a `cd "$TICKETS_ROOT"` when the
+  deleted folder was the shell's cwd so the window isn't stranded (the src's obsolete
+  `.current-ticket`-clearing step is gone). New `commands/remove-ticket.md`; README +
+  getting-started rows; 0.0.12 + CHANGELOG. `plugin validate --strict` ✔.
