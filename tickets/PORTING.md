@@ -326,3 +326,18 @@ scheduled:
   (new Grafana row in the source table) and `/reproduce` (optional live metric/log
   link when recording a result); refreshed README (server list + dropped the
   "grafana parked" omission) and getting-started. 0.0.10 + CHANGELOG.
+
+- **2026-09-01** — Branch `port-sync`. Ported **`/sync`** from `~/TICKETS` — a
+  strictly read-only local ↔ Zendesk reconciler. With a number it syncs one ticket;
+  with none it sweeps the **active queue** (numeric folders whose local `status`
+  isn't terminal `resolved`/`closed`), enumerated across the thousand-bucket layout
+  via `$TICKETS_ROOT/[0-9]*/[0-9]*/metadata.json` + the flat-root glob. Checks
+  `zendesk_health` first (→ `/tickets-up` on failure), pulls only Zendesk gold fields
+  per ticket, and classifies into 🔴 closed-in-ZD-active-locally (`/close`), 🟠
+  new-ZD-activity (`/log-updates`), 🟡 metadata-mismatch (Zendesk wins), 🟢 aligned.
+  Adaptations from src: `/customer` → `/log-updates`; thousand-bucket enumeration via
+  `$TICKETS_ROOT`; Jira-key check reads both the local `jira` field **and**
+  `related_tickets`; full-queue fan-out delegated to a subagent per
+  `references/context-economy.md`. Read-only → no A/B/C recipe, no status writes.
+  New `commands/sync.md`; README + getting-started rows; 0.0.11 + CHANGELOG.
+  `plugin validate --strict` ✔. Live-test pending in a real ticket env.

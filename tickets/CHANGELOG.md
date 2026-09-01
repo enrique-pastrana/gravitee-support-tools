@@ -9,6 +9,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json) gets a matching entry
 > here, in the same PR — so the changelog never drifts from what shipped.
 
+## [0.0.11] - 2026-09-01
+
+### Added
+- **`/sync` command — local ↔ Zendesk reconciliation (read-only).** Ported from the
+  standalone `~/TICKETS` workspace. Compares local ticket folders against live
+  Zendesk (the source of truth) and reports the drift, sorted into severity buckets:
+  🔴 closed in Zendesk but active locally (suggest `/close`), 🟠 new Zendesk activity
+  newer than the local `updated_at` (suggest `/log-updates`), 🟡 metadata mismatch on
+  customer / version / priority / Jira key (Zendesk wins), 🟢 aligned. With a ticket
+  number it syncs just that one; with no argument it sweeps the **active queue** —
+  every numeric folder whose local `status` isn't terminal (`resolved`/`closed`),
+  enumerated across the thousand-bucket layout. Shows Zendesk's **raw** status (`hold`
+  = engineering, `pending` = customer) without translating it to local vocabulary,
+  checks Zendesk reachability via `zendesk_health` first (→ `/tickets-up` on failure),
+  and runs the full-queue fan-out through a subagent to keep the JSON dumps off the
+  main context. **Strictly read-only** — it suggests the fix command but never writes
+  to Zendesk or any local file. The Jira-key check reads both the local `jira` field
+  and `related_tickets` to avoid false positives. Prompt-only; new
+  [`commands/sync.md`](commands/sync.md); README and getting-started updated.
+
 ## [0.0.10] - 2026-09-01
 
 ### Added
