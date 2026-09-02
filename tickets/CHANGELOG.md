@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json) gets a matching entry
 > here, in the same PR — so the changelog never drifts from what shipped.
 
+## [0.0.13] - 2026-09-02
+
+### Added
+- **Metadata fields for the escalation / feature-request slice.** New nullable
+  fields in `templates/metadata.json` and `scripts/set_meta.py`:
+  `installation_type`, `apim_version`, `gko_version`, `am_version`, `database`
+  (L3 escalation context, shared by the upcoming `/escalate problem|question`);
+  `csm`, `tam`, `ae` (account contacts, used by the `/feature-request` closing
+  message); and `fr_status` (feature-request lifecycle: `null → intake_sent →
+  submitted`). All are plain nullable strings — set them with `set_meta.py`, clear
+  with the literal `null`, same as the `kb_*` fields. Foundation only; the
+  `/escalate` and `/feature-request` commands land in follow-up PRs.
+
 ## [0.0.12] - 2026-09-01
 
 ### Added
