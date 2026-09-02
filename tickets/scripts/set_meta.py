@@ -9,7 +9,8 @@ from the value — so a version like "2.0" or "3.10" stays a string instead of
 being silently turned into a float. Kinds:
 
     string   subject, customer, product, version, priority,
-             last_comment_at, ...
+             installation_type, apim_version, gko_version, am_version,
+             database, csm, tam, ae, fr_status, last_comment_at, ...
              stored verbatim; the literal "null" clears a nullable field.
     list     tags, related_tickets
              a JSON array (["a","b"]) or a comma-separated list (a,b,c);
@@ -46,11 +47,19 @@ STRING_KEYS = {
     "ticket_id", "zendesk_url", "subject", "customer", "product", "version",
     "priority", "status", "opened_at", "updated_at", "resolved_at",
     "kb_status", "kb_type", "kb_url", "kb_published_at", "last_comment_at",
+    # L3 escalation context (shared by /escalate problem|question)
+    "installation_type", "apim_version", "gko_version", "am_version", "database",
+    # account contacts (used by /feature-request closing)
+    "csm", "tam", "ae",
+    # feature-request lifecycle: null -> intake_sent -> submitted
+    "fr_status",
 }
 # Fields whose literal "null" means JSON null (clear the field).
 NULLABLE_KEYS = {
     "resolved_at", "resolution_time_hours", "last_comment_id", "last_comment_at",
     "kb_issue", "kb_pr", "kb_status", "kb_type", "kb_url", "kb_published_at",
+    "installation_type", "apim_version", "gko_version", "am_version", "database",
+    "csm", "tam", "ae", "fr_status",
 }
 
 KNOWN_KEYS = LIST_KEYS | BOOL_KEYS | INT_KEYS | NUMBER_KEYS | STRING_KEYS
