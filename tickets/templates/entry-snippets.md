@@ -168,6 +168,26 @@ internal — keep it inside the `<details>` so the timeline stays scannable.
 </details>
 ```
 
+## Feature request
+
+For an outbound feature-request message drafted with `/feature-request` and sent
+to the customer — the **intake** (asking them to confirm use case / impact /
+criticality) or the **closing** (handing off to their CSM/TAM/AE as the ticket
+closes). Outbound (📤); the sent text sits in the `<details>`.
+
+```markdown
+### [NNN] YYYY-MM-DD HH:MM - 📤 Feature request — <intake sent | closing sent>
+
+**Summary:** (one line — what we asked / that we've handed off to Product + contact)
+
+<details>
+<summary>📤 <b>Message sent to customer</b></summary>
+
+(the exact text sent)
+
+</details>
+```
+
 ## Resolution
 
 ```markdown

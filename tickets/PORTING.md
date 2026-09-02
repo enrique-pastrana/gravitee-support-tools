@@ -371,3 +371,20 @@ scheduled:
   via `set_meta.py`, and offer `on hold`. New `commands/escalate.md` + 3 templates;
   README row; 0.0.14 + CHANGELOG. `plugin validate --strict` ✔. First PR of the
   escalate/feature-request slice's user-facing commands; `/feature-request` follows.
+
+- **2026-09-02** — Branch `escalate-fr-pr3-feature-request`. New **`/feature-request`**
+  command — third and final PR of the escalate/feature-request slice; **not a port**,
+  a new two-stage customer-facing lifecycle designed with the user, tracked by the
+  `fr_status` field (`null → intake_sent → submitted`, from 0.0.13) and the
+  `csm`/`tam`/`ae` contact fields. **intake** fills `templates/fr-intake.md`,
+  pre-filling our understanding of the use case/impact from the timeline for the
+  customer to confirm (criticality left to them) → on send logs a 📤 entry, sets
+  `fr_status=intake_sent` + `status=waiting`. **closing** fills
+  `templates/fr-closing.md`, building the CSM/TAM/AE hand-off from metadata (asks +
+  offers to persist if unset) → on send logs the 📤 entry, sets `fr_status=submitted`,
+  chains `/close` (Zendesk-anchored). Both follow `/reply`'s show-before-store rule;
+  the submit-to-Product step is the user's own manual action. Also wired the
+  **proactive closing nudge** into `/log-updates` (step 7) and `/sync` (reads
+  `fr_status`, notes intake-answered on the row). New `commands/feature-request.md` +
+  2 templates + a 📤 `Feature request` snippet in `entry-snippets.md`; README row;
+  0.0.15 + CHANGELOG. `plugin validate --strict` ✔.

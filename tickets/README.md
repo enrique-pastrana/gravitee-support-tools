@@ -215,6 +215,14 @@ Commands available so far:
   investigation from the metadata and timeline. Iterate in chat; you paste it into
   Zendesk yourself; it logs a 🚀 entry (and offers `on hold`) only once you confirm
   it's sent. Never fabricates content — asks or leaves a `‹TODO›`.
+- **`/feature-request [number] [intake|closing]`** — handle a customer feature
+  request across its two-stage lifecycle (tracked by `fr_status`). **intake**:
+  draft a message that pre-fills our understanding (use case, impact) for the
+  customer to confirm and asks their criticality. **closing** (after they reply and
+  you've submitted it to Product yourself): draft the hand-off to their
+  CSM/TAM/AE and chain `/close`. Both are customer messages — same show-before-store
+  rule as `/reply`; you send them yourself. `/log-updates` and `/sync` flag when an
+  intake has been answered so the closing step is due.
 - **`/status [number]`** — print a concise summary of a ticket (state, entry
   count, attachments, last entry). Read-only; infers the ticket from the current
   directory if no number is given.

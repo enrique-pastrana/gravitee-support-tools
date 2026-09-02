@@ -9,6 +9,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json) gets a matching entry
 > here, in the same PR — so the changelog never drifts from what shipped.
 
+## [0.0.15] - 2026-09-02
+
+### Added
+- **`/feature-request` command — two-stage customer feature-request lifecycle.**
+  Final PR of the escalation / feature-request slice. Tracked by the `fr_status`
+  metadata field (`null → intake_sent → submitted`, from 0.0.13):
+  - **intake** — fills `templates/fr-intake.md`, **pre-filling** our understanding
+    of the use case / impact from the timeline for the customer to confirm or
+    correct (criticality is left to them). On send: logs a 📤 `Feature request`
+    entry, sets `fr_status=intake_sent` + `status=waiting`.
+  - **closing** — fills `templates/fr-closing.md`, building the CSM/TAM/AE hand-off
+    from the `csm`/`tam`/`ae` metadata (asks + offers to persist if unset). On send:
+    logs the 📤 closing entry, sets `fr_status=submitted`, then chains `/close`.
+  Both are customer-facing, so they follow the same show-before-store discipline as
+  `/reply` (draft → iterate → your OK → **you send** → confirm → log). The internal
+  submit-to-Product step is manual (yours), not automated.
+- **Proactive closing nudge.** `/log-updates` (step 7) and `/sync` (classification)
+  now flag a ticket whose `fr_status=intake_sent` has just seen a new customer
+  reply, suggesting `/feature-request closing`.
+- New `Feature request` snippet (📤) in `templates/entry-snippets.md`.
+
 ## [0.0.14] - 2026-09-02
 
 ### Added
