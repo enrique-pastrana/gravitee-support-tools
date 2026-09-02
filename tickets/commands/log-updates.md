@@ -118,6 +118,10 @@ Log new ticket activity into the timeline.
 
 7. **Summarise in chat** — how many entries added + one line each, then suggest a
    next action (`/investigate`, `/reply`, `/reproduce`).
+   - **Feature-request nudge:** if `metadata.json` has `fr_status=intake_sent` and
+     one of the new entries is a 📥 customer message, the intake has been answered
+     → suggest **`/feature-request closing`** (hands off to the CSM/TAM/AE and
+     closes the ticket).
 
 ## Fallback: paste flow (Zendesk unavailable)
 

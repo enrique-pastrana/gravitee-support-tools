@@ -33,8 +33,8 @@ chat report only. When a divergence needs a fix, *suggest* the command (`/close`
 2. **Reachability** — call the `zendesk` MCP tool `zendesk_health`. On error, **stop**
    and point at `/tickets-up` — no local-only fallback; the comparison is the point.
 3. **Per ticket, read local** `<ticket>/metadata.json`: `status`, `priority`,
-   `customer`, `product`, `version`, `updated_at`, Jira link (`jira` field — string
-   or list — **and** `related_tickets`).
+   `customer`, `product`, `version`, `updated_at`, `fr_status`, Jira link (`jira`
+   field — string or list — **and** `related_tickets`).
 4. **Per ticket, fetch Zendesk** `zendesk_get_ticket(<id>)` — extract only these
    **gold fields**, discard the rest:
    - `status` (raw: `new`/`open`/`pending`/`hold`/`solved`/`closed`), `priority`,
@@ -68,6 +68,12 @@ mention the rest in the Note.
 | 🟠 New ZD activity not logged | ZD `updated_at` newer than local | `/log-updates` |
 | 🟡 Metadata mismatch | customer / version / priority / Jira key disagree (Zendesk wins) | flag the field |
 | 🟢 Aligned | no meaningful divergence | — |
+
+**Feature-request intake answered:** if local `fr_status=intake_sent` and Zendesk
+shows new customer activity (raw `pending`→ the customer replied, or `updated_at`
+newer), note it on the row — the intake's been answered, suggest
+`/feature-request closing`. It rides along with the 🟠/🟡 flag already on the row
+(not a new severity bucket); surface it in the Note.
 
 **Jira key:** check both the local `jira` field **and** `related_tickets` before
 flagging it missing, or a present key reads as a false positive.
