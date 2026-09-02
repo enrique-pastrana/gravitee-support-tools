@@ -209,6 +209,12 @@ Commands available so far:
   when the stack is down.
 - **`/reply [number]`** — draft an outbound reply grounded in the case, iterate
   on it in chat, and log it to the timeline only once you confirm.
+- **`/escalate [number] [bug|problem|question]`** — draft an **L3 / engineering
+  escalation** from what the ticket knows, in the right template (bug report, L3
+  Problem, or L3 Question), autofilling installation type / component versions /
+  investigation from the metadata and timeline. Iterate in chat; you paste it into
+  Zendesk yourself; it logs a 🚀 entry (and offers `on hold`) only once you confirm
+  it's sent. Never fabricates content — asks or leaves a `‹TODO›`.
 - **`/status [number]`** — print a concise summary of a ticket (state, entry
   count, attachments, last entry). Read-only; infers the ticket from the current
   directory if no number is given.

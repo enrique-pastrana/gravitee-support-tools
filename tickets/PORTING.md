@@ -356,3 +356,18 @@ scheduled:
   deleted folder was the shell's cwd so the window isn't stranded (the src's obsolete
   `.current-ticket`-clearing step is gone). New `commands/remove-ticket.md`; README +
   getting-started rows; 0.0.12 + CHANGELOG. `plugin validate --strict` ✔.
+
+- **2026-09-02** — Branch `escalate-fr-pr2-escalate`. New **`/escalate`** command —
+  **not a port**; a new slice designed with the user for L3 / engineering
+  escalations (three types: `bug`, `problem`, `question`). Built on the metadata
+  foundation from 0.0.13 (`installation_type`, `apim/gko/am_version`, `database`).
+  Flow mirrors `/reply`'s show-before-store discipline: resolve →
+  pick type → read the timeline cheaply (`references/context-economy.md`) → autofill
+  the matching `templates/{bug-report,l3-problem,l3-question}.md` from
+  `metadata.json` + timeline → ask for what's missing (**never invent**; leave
+  `‹TODO›`) → show verbatim in a code block → iterate → user OK → **user pastes into
+  Zendesk** → on their confirmation, log a 🚀 `L3 escalation` entry (new snippet in
+  `templates/entry-snippets.md`) via `bump_entry.py`, persist any L3-context fields
+  via `set_meta.py`, and offer `on hold`. New `commands/escalate.md` + 3 templates;
+  README row; 0.0.14 + CHANGELOG. `plugin validate --strict` ✔. First PR of the
+  escalate/feature-request slice's user-facing commands; `/feature-request` follows.

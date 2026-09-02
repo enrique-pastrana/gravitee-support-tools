@@ -9,6 +9,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json) gets a matching entry
 > here, in the same PR — so the changelog never drifts from what shipped.
 
+## [0.0.14] - 2026-09-02
+
+### Added
+- **`/escalate` command — draft an L3 / engineering escalation (bug / problem /
+  question).** Second PR of the escalation / feature-request slice (foundation
+  landed in 0.0.13). Resolves the ticket, picks the type (from your words or
+  `$ARGUMENTS`, else asks), and fills the matching template —
+  `templates/bug-report.md`, `templates/l3-problem.md`, or
+  `templates/l3-question.md` — autofilling Open Date, installation type, component
+  versions (APIM/GKO/AM), database and the investigation/repro from
+  `metadata.json` + the timeline. Reads the timeline cheaply
+  (`references/context-economy.md`); **never fabricates** engineering-facing
+  content (asks or leaves `‹TODO›`). Shows the draft verbatim in a code block,
+  iterates in chat, and — following the same show-before-store rule as `/reply` —
+  logs nothing until **you** have pasted it into Zendesk and confirmed: then it
+  appends a 🚀 `L3 escalation` timeline entry (new snippet in
+  `templates/entry-snippets.md`) and offers to move the ticket to `on hold`. Any
+  L3-context fields you supply are persisted via `set_meta.py` so future
+  escalations autofill.
+
 ## [0.0.13] - 2026-09-02
 
 ### Added
