@@ -42,6 +42,7 @@ verbatim — pick the snippet that fits and substitute the placeholders.
 - 🧪 Reproduction milestone
 - ✅ Resolution / confirmation
 - 🛠️ Configuration or environment change applied
+- 🚀 Escalation to L3 / engineering
 - ⚠️ Risk, blocker, open question
 - 🔔 Non-substantive one-liner (ack, holding message, ping)
 
@@ -144,6 +145,25 @@ version-selectable). Optional: only log it when the ticket is already in context
 
 - YYYY-MM-DD HH:MM — up (Gamma `<version>`, <EE / OSS>)
 - YYYY-MM-DD HH:MM — torn down (volumes kept / wiped)
+
+</details>
+```
+
+## L3 escalation
+
+For an engineering / L3 escalation drafted with `/escalate` (bug, problem, or
+question) and pasted into Zendesk by the user. The full escalation text is
+internal — keep it inside the `<details>` so the timeline stays scannable.
+
+```markdown
+### [NNN] YYYY-MM-DD HH:MM - 🚀 Escalated to L3 (<bug | problem | question>)
+
+**Asked of L3:** (one line — the bug confirmation / question / request)
+
+<details>
+<summary>🚀 <b>Escalation submitted</b></summary>
+
+(the exact text pasted into Zendesk)
 
 </details>
 ```
