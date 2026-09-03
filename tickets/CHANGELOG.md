@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json) gets a matching entry
 > here, in the same PR — so the changelog never drifts from what shipped.
 
+## [0.0.16] - 2026-09-03
+
+### Changed
+- **`/reply` — hardened the show-before-store rule.** A customer reply must be
+  shown in chat and approved **before** anything is written to disk; the prompt
+  now leads with a loud ⛔ invariant, reworded step 4 ("**Compose** the draft *in
+  chat, not to any file*" instead of "Write the draft"), and a matching Don't.
+  The rule is spelled out to hold **even when the user's own words say "store it /
+  guárdalo"** (treat as "prepare and show me"), and even when a reply is asked for
+  in plain language without the `/reply` command. Fixes the friction where a draft
+  could land straight in `timeline.md` unseen (ticket 18242).
+
 ## [0.0.15] - 2026-09-02
 
 ### Added

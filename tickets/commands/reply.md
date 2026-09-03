@@ -5,6 +5,17 @@ argument-hint: [ticket-number]
 
 You are drafting an outbound reply to the customer and logging it in the timeline.
 
+> **⛔ INVARIANT — show before store.** A customer reply is **shown in chat and
+> approved by the user before anything is written to disk.** The **first** thing
+> you produce is the draft, in the chat, as a blockquote — never a
+> `timeline.md` entry, never a file. You touch `bump_entry`/`timeline.md` **only
+> after** an explicit "save / log it / ok" (step 7). This holds **even when the
+> user's own words say "store it / almacénalo / guárdalo"** — treat that as
+> "prepare it and show me", not as permission to write. Storing a reply the user
+> hasn't seen is a bug, not a shortcut. (This rule also applies when a reply is
+> asked for in plain language **without** the `/reply` command — the guard is the
+> same.)
+
 - Ticket data → the user's workspace `$TICKETS_ROOT` (default `~/TICKETS`).
 - Plugin scripts/templates → `${CLAUDE_PLUGIN_ROOT}`; never write plugin files
   into the workspace.
@@ -42,7 +53,8 @@ You are drafting an outbound reply to the customer and logging it in the timelin
      build on it (a nudge, or new information), or confirm with the user that a
      re-ask is intended.
 
-4. **Write the draft** in English, ready to paste into Zendesk:
+4. **Compose the draft** in English — *in the chat, not to any file* — ready to
+   paste into Zendesk:
    - Greeting (no first names unless the timeline shows them).
    - One short paragraph framing the problem as the customer sees it.
    - The analysis you ran (one or two paragraphs, no jargon dump).
@@ -99,6 +111,9 @@ request for specific info).
 
 ## Don'ts
 
+- **Don't write the timeline entry (or any file) before the user has seen the
+  draft in chat and explicitly approved it** — see the invariant at the top. Not
+  even if the request said "store it".
 - Don't promise SLAs or timelines that aren't already agreed.
 - Don't claim a fix is validated unless `timeline.md` has a 🧪 entry showing it
   was reproduced and the fix worked.
