@@ -6,10 +6,11 @@ argument-hint: [ticket-number]
 You are drafting an outbound reply to the customer and logging it in the timeline.
 
 > **⛔ INVARIANT — show before store.** A customer reply is **shown in chat and
-> approved by the user before anything is written to disk.** The **first** thing
-> you produce is the draft, in the chat, as a blockquote — never a
-> `timeline.md` entry, never a file. You touch `bump_entry`/`timeline.md` **only
-> after** an explicit "save / log it / ok" (step 7). This holds **even when the
+> approved by the user before anything is written to disk.** The first thing you
+> produce is **either a clarifying question or the draft** (in the chat, as a
+> blockquote) — **never** a `timeline.md` entry, never a file. You touch
+> `bump_entry`/`timeline.md` **only after** an explicit "save / log it / ok"
+> (step 7). This holds **even when the
 > user's own words say "store it / almacénalo / guárdalo"** — treat that as
 > "prepare it and show me", not as permission to write. Storing a reply the user
 > hasn't seen is a bug, not a shortcut. (This rule also applies when a reply is
