@@ -1,5 +1,5 @@
 ---
-description: Draft an L3 engineering escalation from the ticket (bug / problem / question), show it for review, then log it in the timeline once you've pasted it into Zendesk.
+description: Draft an L3 engineering escalation — raise/file a bug, or a problem or question — from the ticket, show it inline for review, then log it once you've filed it. Also triggers in plain language ("vamos a crear un bug", "raise a Jira bug", "escala esto").
 argument-hint: [ticket] [bug|problem|question]
 ---
 
@@ -7,7 +7,17 @@ You are drafting an **L3 / engineering escalation** from what the ticket already
 knows, for the user to paste into Zendesk. Three types, one flow. It is
 **outward-bound**: fill → show in chat → iterate → user OK → **the user pastes it
 into Zendesk** → user confirms logged → only then touch `timeline.md`. Trigger it
-in plain language too ("vamos a crear un bug", "escala esto como problem").
+in plain language too ("vamos a crear un bug", "raise a Jira bug", "escala esto
+como problem") — the same flow applies whether or not `/escalate` was typed.
+
+⛔ **Invariant — inline draft, nothing on disk until the user files it.** The
+draft is the chosen template's fields, **rendered in chat only**. Until the user
+confirms they've filed / pasted it, write **no file, no folder, no timeline
+entry** — not an `escalation/…` draft, not a scratch `.md`, nothing. This holds
+**even in plain language** ("vamos a crear un bug") and **even if the user says
+"guárdalo / store it"** — that means *prepare it and show me*, not write it. The
+**only** disk writes are the metadata persist (step 8) and the timeline entry
+(step 9), both **after** the user's confirmation.
 
 - Ticket data → `$TICKETS_ROOT` (default `~/TICKETS`); plugin files →
   `${CLAUDE_PLUGIN_ROOT}` (never write plugin files into the workspace).
@@ -34,7 +44,10 @@ in plain language too ("vamos a crear un bug", "escala esto como problem").
    reproduction (🧪), root-cause/investigation (🔍), the key inbound (📥). Don't
    dump the whole file. The drafting (steps 5–7) stays **inline** with the user.
 
-4. **Autofill the chosen template** from `${CLAUDE_PLUGIN_ROOT}/templates/<t>.md`:
+4. **Autofill the chosen template** from `${CLAUDE_PLUGIN_ROOT}/templates/<t>.md`.
+   Use its **fields verbatim** — the draft *is* that template filled in; never
+   substitute a bug layout of your own (`bug` = the exact `bug-report.md` fields:
+   Describe / To Reproduce / Expected / Current / Useful information / Desktop).
    - `{{open_date}}` = today (problem/question).
    - `{{installation_type}}`, `{{apim_version}}`, `{{gko_version}}`,
      `{{am_version}}`, `{{database}}` ← `metadata.json` (problem/question). A
@@ -91,7 +104,11 @@ in plain language too ("vamos a crear un bug", "escala esto como problem").
 
 ## Don'ts
 
-- **Don't auto-send** and **don't log before** the user confirms they pasted it.
-- **Don't invent** content — ask or leave `‹TODO›`; never fabricate repro steps,
-  versions, or a bug confirmation the ticket doesn't support.
+- **Don't auto-send** and **don't log before** the user confirms they filed /
+  pasted it — no `timeline.md` entry until step 9's confirmation.
+- **Don't write any draft file or folder** (no `escalation/…`, no scratch `.md`) —
+  the draft lives **inline in chat**; the only disk writes are steps 8–9.
+- **Don't invent** content or a structure — ask or leave `‹TODO›`; never fabricate
+  repro steps, versions, a bug confirmation the ticket doesn't support, or a bug
+  layout other than the template's fields.
 - **Don't bump `next_entry`** for the metadata-only persist in step 8.

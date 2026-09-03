@@ -9,6 +9,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json) gets a matching entry
 > here, in the same PR — so the changelog never drifts from what shipped.
 
+## [0.0.17] - 2026-09-03
+
+### Changed
+- **`/escalate` — hardened the show-before-store rule (same fix as `/reply` got
+  in 0.0.16, now for escalations).** A friction on ticket 18132 had a "create a
+  bug" request bypass the whole flow: it invented its own bug structure, wrote it
+  to an ad-hoc `escalation/…` draft file, and appended a `timeline.md` entry
+  immediately — none of which the skill intends. The prompt now:
+  - leads with a loud ⛔ invariant — the draft is **inline in chat only**; until
+    the user confirms they've filed it, write **no file, no folder, no timeline
+    entry**, and this holds **even in plain language** and **even if the user says
+    "guárdalo / store it"**;
+  - adds a **no ad-hoc file** Don't (no `escalation/…`, no scratch `.md`) — the
+    only disk writes are the metadata persist (step 8) and the timeline entry
+    (step 9), both after confirmation;
+  - enforces the **template verbatim** — `bug` = the exact `bug-report.md` fields
+    (Describe / To Reproduce / Expected / Current / Useful information / Desktop),
+    never a self-invented layout (step 4 + a matching Don't);
+  - broadens the frontmatter `description` and the trigger line so plain-language
+    "raise a bug / vamos a crear un bug" reliably maps to `/escalate`.
+
 ## [0.0.16] - 2026-09-03
 
 ### Changed
