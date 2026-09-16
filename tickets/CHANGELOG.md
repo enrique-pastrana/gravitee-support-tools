@@ -9,6 +9,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json) gets a matching entry
 > here, in the same PR — so the changelog never drifts from what shipped.
 
+## [0.0.18] - 2026-09-16
+
+### Added
+- **`/index-ticket` — index a ticket's timeline into the vectordb**, so a
+  finished case turns up as prior art the next time a similar one lands. First
+  command of the unported index/search slice. `scripts/index_ticket.py` posts
+  `timeline.md` to the vectordb `/ingest` endpoint (`source=tickets`,
+  `path=<number>/timeline.md`, `kind=support-ticket`, distinct from the KB's
+  `kind=kb-article`); the API chunks server-side and upserts by chunk hash, so
+  re-running after edits refreshes changed chunks and prunes stale ones —
+  **idempotent, never duplicates**.
+  - **Only `timeline.md` is indexed.** The curated investigation is the signal;
+    `received/` logs and attachments are excluded on purpose because they dilute
+    rag_search ranking.
+  - Ported, not copied: dropped the source's dead local chunking
+    (`chunk_text()` + `CHUNK_SIZE`/`CHUNK_OVERLAP` were computed and discarded,
+    since the payload always carried the whole document) and its unused `Path`
+    import, and aligned the stack-down hint with `index_kb.py`.
+- **`indexed_at` metadata field** (nullable string, in `templates/metadata.json`
+  and `set_meta.py`). Stamped by `index_ticket.py` itself on a successful
+  ingest — deterministic, atomic, and never a timestamp the model had to guess.
+  Against `updated_at` it tells a stale index from a fresh one, which is what
+  lets a future `/index-all` skip tickets that haven't moved. Stamping is
+  **best-effort**: the ingest has already happened, so a missing or invalid
+  `metadata.json` is a warning, not a failed index.
+
+### Changed
+- **`/close` step 8** — `/index-ticket` (and `/kb`) are now offered as real
+  follow-ups; the old "don't run them — these commands aren't ported yet" note
+  was stale for both. Deliberately **suggested, not auto-run**: closing stays a
+  local state change and never starts depending on the stack being up.
+- **`references/search-precedents.md`** — spells out that past tickets only enter
+  the corpus once `/index-ticket` has indexed them, so a thin ticket corpus reads
+  as "nothing indexed yet" rather than "no precedent exists".
+- **README status banner** — it still claimed only the first five commands were
+  ported; now names the real state and what's actually left.
+
 ## [0.0.17] - 2026-09-03
 
 ### Changed

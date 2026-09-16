@@ -42,3 +42,8 @@ The corpus is code/config plus tickets indexed so far — expect **code/doc**
 hits as well as past tickets. Keep only genuinely relevant results (id/path,
 one-line why); if nothing is relevant, say so in one line rather than forcing a
 weak match.
+
+Past tickets only appear here once someone has indexed them — that's what
+`/index-ticket` does (`path=<ticket>/timeline.md`, `kind=support-ticket`), so a
+thin ticket corpus means tickets haven't been indexed, not that no precedent
+exists.
