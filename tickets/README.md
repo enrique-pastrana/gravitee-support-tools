@@ -7,9 +7,11 @@ Code.
 
 > **Status: work in progress.** This plugin is being ported from the standalone
 > `~/TICKETS` workspace into a portable marketplace plugin. The MCP wiring to
-> `ia-tooling` is done and tested, and the first commands (`tickets-up`,
-> `new-ticket`, `log-updates`, `reply`, `status`) are ported; the rest are on
-> the way — see [PORTING.md](PORTING.md) for the plan and progress.
+> `ia-tooling` is done and tested, and the whole ticket lifecycle is ported —
+> opening, logging, investigating, reproducing, replying, escalating, closing,
+> the KB slice and `/index-ticket`. Still to come: the rest of the index/search
+> slice (`index-all`, `index-repo`, `ask`) and `rca` — see
+> [PORTING.md](PORTING.md) for the plan and progress.
 
 > **New here?** Read [docs/getting-started.md](docs/getting-started.md) — a
 > plain-language first-time guide to what the plugin does and how to use it.
@@ -253,6 +255,13 @@ Commands available so far:
   `kb_status=published`/`kb_url`/`kb_published_at` on the ticket. Confirms before
   merging and never merges a conflicting PR. Final step of the KB lifecycle. Needs
   `gh` + `KB_REPO` — see [Knowledge base](#knowledge-base-kb-candidate--optional).
+- **`/index-ticket [number]`** — index the ticket's **`timeline.md`** into the
+  vectordb (`source=tickets`, `path=<number>/timeline.md`) so future
+  similar-ticket searches can retrieve it. Only the curated timeline is indexed —
+  `received/` logs and attachments are excluded on purpose, since they dilute
+  ranking. **Idempotent** (upsert by chunk, prunes stale ones), and it stamps
+  `indexed_at` on the ticket so you can tell a stale index from a fresh one.
+  Natural follow-up to `/close`.
 
 ## Requirements
 

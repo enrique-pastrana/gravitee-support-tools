@@ -31,5 +31,6 @@
   "fr_status": null,
   "next_entry": 1,
   "last_comment_id": null,
-  "last_comment_at": null
+  "last_comment_at": null,
+  "indexed_at": null
 }

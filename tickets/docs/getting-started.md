@@ -197,6 +197,8 @@ A typical case, start to finish:
 7. **Wrap it up:** `/close`
    Once the customer confirms, mirrors the ticket's terminal state from Zendesk
    (solved → resolved, closed → closed), stamps the resolution and logs a ✅ entry.
+   Then `/index-ticket` feeds the finished timeline into the vectordb, so the
+   next similar case can find this one.
 8. **Capture the knowledge (optional):** if the case is worth documenting,
    `/kb-candidate <reason>` → `/kb` → `/kb-publish` turns it into a published KB
    article (see the commands table and the KB workflow reference).
@@ -216,6 +218,7 @@ A typical case, start to finish:
 | `/sync [number]` | Compares local folders against live Zendesk and reports the drift (closed-in-ZD, new activity, metadata mismatches), sorted by severity. Read-only — suggests fixes, never applies them. | Periodically, to catch tickets that moved on Zendesk while your local snapshot went stale. With no number it sweeps the whole active queue. |
 | `/remove-ticket <number>` | Deletes a ticket folder entirely (`rm -rf`) after showing a recap and asking for explicit confirmation. Destructive and irreversible; refuses paths outside `$TICKETS_ROOT`. | To clean up a mistaken or throwaway ticket folder. |
 | `/close [number]` | Mirrors the ticket's terminal state from Zendesk, stamps the resolution, logs a ✅ entry. | Once the customer confirms the case is done. |
+| `/index-ticket [number]` | Indexes the ticket's `timeline.md` into the vectordb so it turns up as prior art in future searches. Idempotent — safe to re-run. | Once a ticket holds investigation worth finding again: after a meaty `/investigate`, or right after `/close`. |
 | `/kb-candidate <reason> [number]` | Flags the ticket as worth a KB article — opens a tracking Issue in your `$KB_REPO` (labeled `kb:candidate`) and records it on the ticket. | Mid-flow, the moment you realise a case is worth documenting. Needs `KB_REPO` set (see setup). |
 | `/kb [number]` | Turns a candidate into a draft article: generates it from the timeline, iterates with you in chat, then opens a draft PR (`kb:draft`) in your `$KB_REPO`. | Once the case is resolved and you want to write up the KB article. Needs `KB_REPO` set. |
 | `/kb-publish [number]` | Merges the draft PR (closing the candidate Issue), indexes the article into the vectordb, and records the published URL on the ticket. | Once the draft PR is reviewed and approved. Needs `KB_REPO` set. |

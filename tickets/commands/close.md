@@ -94,12 +94,12 @@ to what Zendesk shows.
    It's the single source of truth `/status` reads instead of the full timeline,
    so leave it self-contained and current.
 
-8. **Suggest natural follow-ups** (don't run them — these commands aren't ported
-   yet):
+8. **Suggest natural follow-ups** — offer them, don't run them unasked:
    - If this is a KB candidate: `/kb` to draft a knowledge-base article from the
      timeline.
    - `/index-ticket` to index the now-complete, curated timeline into the
-     vectordb so it surfaces in future similar-ticket searches.
+     vectordb so it surfaces in future similar-ticket searches. Closing stays
+     local and never depends on the stack being up.
 
 ## Don'ts
 

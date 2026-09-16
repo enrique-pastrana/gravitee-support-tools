@@ -388,3 +388,28 @@ scheduled:
   `fr_status`, notes intake-answered on the row). New `commands/feature-request.md` +
   2 templates + a 📤 `Feature request` snippet in `entry-snippets.md`; README row;
   0.0.15 + CHANGELOG. `plugin validate --strict` ✔.
+
+- **2026-09-16** — Branch `port-index-ticket`. Ported **`/index-ticket`** — the
+  first of the unported index/search slice (`index-all`, `index-repo`, `rca`,
+  `ask` still to go). `scripts/index_ticket.py` sends `timeline.md` to the
+  vectordb `/ingest` endpoint (`source=tickets`, `path=<n>/timeline.md`,
+  `kind=support-ticket`); only the curated timeline is indexed, `received/` logs
+  and attachments stay out because they dilute ranking. **Cleanup on the way in:**
+  dropped the source's dead `chunk_text()` + `CHUNK_SIZE`/`CHUNK_OVERLAP` (the
+  payload always sent the whole document and the API chunks server-side — the
+  local chunking was computed and thrown away, used only as an is-it-empty test,
+  now a plain `text.strip()`), dropped the unused `Path` import, and aligned the
+  stack-down hint with `index_kb.py` (`/tickets:tickets-up`). **New `indexed_at`
+  metadata field** (nullable string, added to `templates/metadata.json` +
+  `set_meta.py`): stamped by the script itself on a successful ingest — the model
+  never hand-writes the timestamp, and it can't guess the wall clock. Compared
+  against `updated_at` it distinguishes a stale index from a fresh one, which is
+  what will let `/index-all` be incremental instead of re-indexing the world.
+  Stamping is **best-effort**: the ingest already happened, so a missing/invalid
+  `metadata.json` is a warning on stderr, not a failure. Wired into `/close`
+  step 8 as a real follow-up (its "these commands aren't ported yet" note was
+  stale for `/kb` too) — **suggested, not auto-run**, so closing stays local and
+  never depends on the stack being up. `references/search-precedents.md` now says
+  tickets only appear in the corpus once indexed, so a thin ticket corpus reads as
+  "not indexed yet", not "no precedent". README + getting-started rows; 0.0.18 +
+  CHANGELOG. `plugin validate --strict` ✔.
