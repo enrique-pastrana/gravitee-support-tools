@@ -9,6 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json) gets a matching entry
 > here, in the same PR — so the changelog never drifts from what shipped.
 
+## [0.0.19] - 2026-09-30
+
+### Added
+- **`/p1-log` — a running P1 war-room log for the ticket.** During an urgent
+  incident you drop raw notes in any language; the command cleans each into
+  concise **English**, classifies it, and maintains a plain-text `p1-log.txt` in
+  the ticket folder. Notes are filed under two sections — **Current status** and
+  **Next steps** — each grouped by actor (**Gravitee** / **Customer**, empty
+  actors omitted), with a natural-language `When:` deadline per next-step block.
+  It opens a **capture session**: every message is a note until you say "para"
+  (pause, to ask a normal question) and "sigue" (resume); `stop` stamps the log
+  closed and offers to fold a summary into `timeline.md`. The **file is the
+  source of truth**, so re-running the command reopens and continues it even in a
+  fresh session. Prompt-only (no script); shares the standard ticket-resolution
+  chain and write guards. Section shape mirrors `/updateP1` (Current status /
+  Next steps, Gravitee / Customer) for a consistent mental model.
+
 ## [0.0.18] - 2026-09-16
 
 ### Added

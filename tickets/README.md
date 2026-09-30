@@ -209,6 +209,13 @@ Commands available so far:
   entries, downloading any new attachments. Each entry keeps a `comment_id`
   pointer back to the exact words in Zendesk. Falls back to a manual paste flow
   when the stack is down.
+- **`/p1-log [stop]`** — keep a running **P1 war-room log** in `p1-log.txt`: you
+  drop raw notes in any language, they're cleaned into concise English and filed
+  under **Current status / Next steps**, grouped by actor (Gravitee / Customer),
+  with a `When:` deadline per next-step block. Opens a capture session — say
+  "para" to pause for a normal question, "sigue" to resume; `stop` closes it and
+  offers to fold a summary into the timeline. The file is the source of truth, so
+  it survives a fresh session.
 - **`/reply [number]`** — draft an outbound reply grounded in the case, iterate
   on it in chat, and log it to the timeline only once you confirm.
 - **`/escalate [number] [bug|problem|question]`** — draft an **L3 / engineering
